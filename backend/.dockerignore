@@ -1,0 +1,7 @@
+.gradle
+build
+!gradle-wrapper.jar
+out
+.idea
+.vscode
+.git
