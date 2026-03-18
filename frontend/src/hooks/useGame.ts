@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { GameData } from '../interfaces/game';
+import { useAuth } from '../contexts/AuthContext';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // ms
@@ -28,6 +29,7 @@ export function useGame(): UseGameReturn {
   const [loading, setLoading] = useState(true);
   const [makingMove, setMakingMove] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { getAuthHeader } = useAuth();
 
   // Fetch with retry logic
   const fetchWithRetry = useCallback(
@@ -51,7 +53,12 @@ export function useGame(): UseGameReturn {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchWithRetry('/game', { method: 'POST' });
+      const response = await fetchWithRetry('/game', {
+        method: 'POST',
+        headers: {
+          ...getAuthHeader(),
+        },
+      });
       const data = await response.json();
 
       if (!isValidGameData(data)) {
@@ -87,7 +94,10 @@ export function useGame(): UseGameReturn {
       try {
         const response = await fetchWithRetry(`/game/${gameData.id}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeader(),
+          },
           body: JSON.stringify({
             ...gameData,
             gameMap: { ...gameData.gameMap, map: newMap },

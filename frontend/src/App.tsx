@@ -1,9 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
 import { useGame } from './hooks/useGame';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { LoginForm } from './components/LoginForm';
+import { RegisterForm } from './components/RegisterForm';
 
-function App() {
+function Game() {
   const { gameData, loading, makingMove, error, startNewGame, makeMove } = useGame();
+  const { logout } = useAuth();
 
   useEffect(() => {
     startNewGame();
@@ -41,7 +45,12 @@ function App() {
 
   return (
     <div className="game-container">
-      <h1 className="game-title">Tic-Tac-Toe</h1>
+      <div className="game-header">
+        <h1 className="game-title">Tic-Tac-Toe</h1>
+        <button onClick={logout} className="btn logout-btn">
+          Logout
+        </button>
+      </div>
 
       {error && <div className="error-message">{error}</div>}
 
@@ -78,4 +87,27 @@ function App() {
   );
 }
 
-export default App;
+function App() {
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    if (authMode === 'login') {
+      return <LoginForm onSwitchToRegister={() => setAuthMode('register')} />;
+    } else {
+      return <RegisterForm onSwitchToLogin={() => setAuthMode('login')} />;
+    }
+  }
+
+  return <Game />;
+}
+
+function AppWrapper() {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+}
+
+export default AppWrapper;

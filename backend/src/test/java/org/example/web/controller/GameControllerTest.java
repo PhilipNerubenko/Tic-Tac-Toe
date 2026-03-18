@@ -5,6 +5,7 @@ import org.example.domain.model.GameSession;
 import org.example.domain.model.GameStatus;
 import org.example.domain.repository.GameRepository;
 import org.example.domain.service.GameService;
+import org.example.domain.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -14,14 +15,16 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(GameController.class)
+@WebMvcTest(value = GameController.class, excludeAutoConfiguration = org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class)
 class GameControllerTest {
 
     @Autowired
@@ -33,10 +36,18 @@ class GameControllerTest {
     @MockBean
     private GameRepository gameRepository;
 
+    @MockBean
+    private UserService userService;
+
     @Test
     void createGame_ShouldReturnCreatedStatus() throws Exception {
+        String credentials = Base64.getEncoder().encodeToString("testuser:testpassword".getBytes());
+        
+        when(userService.validateCredentials("testuser", "testpassword")).thenReturn(true);
+
         mockMvc.perform(post("/game")
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Basic " + credentials))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists());
     }
@@ -48,9 +59,12 @@ class GameControllerTest {
         GameMap map = new GameMap(3);
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYING);
 
-        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
-        Mockito.when(gameService.validateMapIntegrity(any(), any())).thenReturn(true);
-        Mockito.when(gameService.checkGameStatus(any())).thenReturn(GameStatus.PLAYING);
+        when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+        when(gameService.validateMapIntegrity(any(), any())).thenReturn(true);
+        when(gameService.checkGameStatus(any())).thenReturn(GameStatus.PLAYING);
+
+        String credentials = Base64.getEncoder().encodeToString("testuser:testpassword".getBytes());
+        when(userService.validateCredentials("testuser", "testpassword")).thenReturn(true);
 
         String jsonPayload = """
         {
@@ -64,7 +78,8 @@ class GameControllerTest {
 
         mockMvc.perform(post("/game/" + sessionId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonPayload))
+                        .content(jsonPayload)
+                        .header("Authorization", "Basic " + credentials))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PLAYING"));
     }
@@ -74,9 +89,12 @@ class GameControllerTest {
         UUID sessionId = UUID.randomUUID();
 
         GameSession existingSession = new GameSession(new GameMap(3));
-        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(existingSession));
+        when(gameRepository.findById(sessionId)).thenReturn(Optional.of(existingSession));
 
-        Mockito.when(gameService.validateMapIntegrity(any(), any())).thenReturn(false);
+        when(gameService.validateMapIntegrity(any(), any())).thenReturn(false);
+
+        String credentials = Base64.getEncoder().encodeToString("testuser:testpassword".getBytes());
+        when(userService.validateCredentials("testuser", "testpassword")).thenReturn(true);
 
         String jsonPayload = """
         {
@@ -90,7 +108,8 @@ class GameControllerTest {
 
         mockMvc.perform(post("/game/" + sessionId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonPayload))
+                        .content(jsonPayload)
+                        .header("Authorization", "Basic " + credentials))
                 .andExpect(status().isBadRequest());
     }
 
@@ -100,9 +119,12 @@ class GameControllerTest {
         GameMap map = new GameMap();
         GameSession session = new GameSession(id, map, GameStatus.PLAYING);
 
-        Mockito.when(gameRepository.findById(id)).thenReturn(Optional.of(session));
-        Mockito.when(gameService.validateMapIntegrity(any(), any())).thenReturn(true);
-        Mockito.when(gameService.checkGameStatus(any())).thenReturn(GameStatus.CROSS_WIN);
+        when(gameRepository.findById(id)).thenReturn(Optional.of(session));
+        when(gameService.validateMapIntegrity(any(), any())).thenReturn(true);
+        when(gameService.checkGameStatus(any())).thenReturn(GameStatus.CROSS_WIN);
+
+        String credentials = Base64.getEncoder().encodeToString("testuser:testpassword".getBytes());
+        when(userService.validateCredentials("testuser", "testpassword")).thenReturn(true);
 
         String jsonPayload = """
                 {
@@ -113,7 +135,8 @@ class GameControllerTest {
 
         mockMvc.perform(post("/game/" + id)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(jsonPayload));
+                .content(jsonPayload)
+                .header("Authorization", "Basic " + credentials));
 
         Mockito.verify(gameService, Mockito.never()).getNextMove(any());
 
