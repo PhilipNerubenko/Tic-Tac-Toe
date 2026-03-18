@@ -2,31 +2,32 @@ package org.example.datasource.repository;
 
 import org.example.datasource.mapper.GameMapper;
 import org.example.datasource.model.GameSessionEntity;
-import org.example.datasource.storage.GameStorage;
 import org.example.domain.model.GameSession;
 import org.example.domain.repository.GameRepository;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Реализация интерфейса репозитория для управления игровыми сессиями.
  * <p>
- * Данный класс отвечает за координацию между хранилищем {@link GameStorage}
+ * Данный класс отвечает за координацию между хранилищем {@link JpaGameRepository}
  * и механизмом преобразования данных {@link GameMapper}.
  */
 public class GameRepositoryImpl implements GameRepository {
 
     /** Хранилище данных (например, в оперативной памяти или БД) */
-    private final GameStorage gameStorage;
+    private final JpaGameRepository jpaGameRepository;
 
     /**
      * Создает экземпляр репозитория.
-     * @param gameStorage реализация хранилища данных.
+     * @param jpaGameRepository реализация хранилища данных.
      */
-    public GameRepositoryImpl(GameStorage gameStorage) {
-        this.gameStorage = gameStorage;
+    public GameRepositoryImpl(JpaGameRepository jpaGameRepository) {
+        this.jpaGameRepository = jpaGameRepository;
     }
 
     /**
@@ -38,7 +39,7 @@ public class GameRepositoryImpl implements GameRepository {
     @Override
     public void save(GameSession gameSession) {
         GameSessionEntity gameSessionEntity = GameMapper.toEntity(gameSession);
-        gameStorage.save(gameSessionEntity);
+        jpaGameRepository.save(gameSessionEntity);
     }
 
     /**
@@ -50,9 +51,7 @@ public class GameRepositoryImpl implements GameRepository {
      */
     @Override
     public Optional<GameSession> findById(UUID id) {
-        GameSessionEntity gameSessionEntity = gameStorage.findById(id);
-
-        return Optional.ofNullable(gameSessionEntity)
+        return jpaGameRepository.findById(id)
                 .map(GameMapper::toDomain);
     }
 
@@ -62,8 +61,8 @@ public class GameRepositoryImpl implements GameRepository {
      * @param id UUID сессии для удаления.
      */
     @Override
-    public void removeById(UUID id) {
-        gameStorage.removeById(id);
+    public void deleteById(UUID id) {
+        jpaGameRepository.deleteById(id);
     }
 
     /**
@@ -72,7 +71,11 @@ public class GameRepositoryImpl implements GameRepository {
      * @return карта всех игровых сессий в формате доменных моделей.
      */
     @Override
-    public Map<UUID, GameSession> getAll() {
-        return GameMapper.toDomainMap(gameStorage.getAll());
+    public Map<UUID, GameSession> findAll() {
+        Iterable<GameSessionEntity> entities = jpaGameRepository.findAll();
+
+        return StreamSupport.stream(entities.spliterator(), false)
+                .map(GameMapper::toDomain)
+                .collect(Collectors.toMap(GameSession::getId, session -> session));
     }
 }

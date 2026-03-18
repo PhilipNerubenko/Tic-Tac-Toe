@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 class GameRepositoryImplTest {
 
     @Mock
-    private GameStorage gameStorage;
+    private JpaGameRepository jpaGameRepository;
 
     @InjectMocks
     private GameRepositoryImpl repository;
@@ -31,12 +31,12 @@ class GameRepositoryImplTest {
     @Test
     void findById_ShouldReturnEmptyOptional_WhenStorageReturnsNull() {
         UUID id = UUID.randomUUID();
-        when(gameStorage.findById(id)).thenReturn(null);
+        when(jpaGameRepository.findById(id)).thenReturn(null);
 
         Optional<GameSession> result = repository.findById(id);
 
         assertTrue(result.isEmpty());
-        verify(gameStorage).findById(id);
+        verify(jpaGameRepository).findById(id);
     }
 
     @Test
@@ -46,42 +46,42 @@ class GameRepositoryImplTest {
 
         repository.save(session);
 
-        verify(gameStorage).save(argThat(entity -> entity.getId().equals(id)));
+        verify(jpaGameRepository).save(argThat(entity -> entity.getId().equals(id)));
     }
 
     @Test
-    void removeById_ShouldCallStorageRemove() {
+    void removeById_ShouldCallStorageDelete() {
         UUID id = UUID.randomUUID();
 
-        repository.removeById(id);
+        repository.deleteById(id);
 
-        verify(gameStorage, times(1)).removeById(id);
+        verify(jpaGameRepository, times(1)).deleteById(id);
     }
 
     @Test
-    void getAll_ShouldReturnMappedMap() {
+    void findAll_ShouldReturnMappedMap() {
         UUID id = UUID.randomUUID();
         GameMapEntity mapEntity = new GameMapEntity(new int[][]{{0}}, 1);
         GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYING);
 
         Map<UUID, GameSessionEntity> storageMap = Map.of(id, entity);
-        when(gameStorage.getAll()).thenReturn(storageMap);
+        when(jpaGameRepository.getAll()).thenReturn(storageMap);
 
-        Map<UUID, GameSession> result = repository.getAll();
+        Map<UUID, GameSession> result = repository.findAll();
 
         assertNotNull(result);
         assertEquals(1, result.size());
         assertTrue(result.containsKey(id));
         assertEquals(GameStatus.PLAYING, result.get(id).getStatus());
 
-        verify(gameStorage).getAll();
+        verify(jpaGameRepository).getAll();
     }
 
     @Test
-    void getAll_ShouldReturnEmptyMap_WhenStorageIsEmpty() {
-        when(gameStorage.getAll()).thenReturn(Map.of());
+    void findAll_ShouldReturnEmptyMap_WhenStorageIsEmpty() {
+        when(jpaGameRepository.getAll()).thenReturn(Map.of());
 
-        Map<UUID, GameSession> result = repository.getAll();
+        Map<UUID, GameSession> result = repository.findAll();
 
         assertNotNull(result);
         assertTrue(result.isEmpty());

@@ -1,5 +1,7 @@
 package org.example.datasource.model;
 
+import jakarta.persistence.*;
+
 import java.util.UUID;
 
 /**
@@ -8,16 +10,35 @@ import java.util.UUID;
  * Объединяет в себе идентификатор сессии, состояние игрового поля
  * и текущий статус игры (в процессе, завершена и т.д.).
  */
+@Entity
+@Table(name = "game_sessions")
 public class GameSessionEntity {
 
     /** Уникальный идентификатор игровой сессии */
+    @Id
+    @Column(name = "id", updatable = false, nullable = false)
     private final UUID id;
 
     /** Данные игрового поля */
+    @Embedded
     private final GameMapEntity map;
 
     /** Текущее состояние игры */
+    @Enumerated(EnumType.STRING)
     private GameStatusEntity status;
+
+    /**
+     * Конструктор по умолчанию, необходимый для JPA/Hibernate.
+     */
+    protected GameSessionEntity() {
+        this.id = null;
+        this.map = null;
+    }
+
+    protected GameSessionEntity(UUID id, GameMapEntity map) {
+        this.id = id;
+        this.map = map;
+    }
 
     /**
      * Конструктор для создания новой игры.

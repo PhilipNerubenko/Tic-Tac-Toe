@@ -36,12 +36,12 @@ public interface GameRepository {
      *
      * @return карта всех сессий, где ключ — UUID, а значение — объект сессии.
      */
-    Map<UUID, GameSession> getAll();
+    Map<UUID, GameSession> findAll();
 
     /**
      * Удаляет игровую сессию из системы.
      *
      * @param id уникальный идентификатор сессии для удаления.
      */
-    void removeById(UUID id);
+    void deleteById(UUID id);
 }

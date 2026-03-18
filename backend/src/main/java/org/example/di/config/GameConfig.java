@@ -1,12 +1,14 @@
 package org.example.di.config;
 
 import org.example.datasource.repository.GameRepositoryImpl;
-import org.example.datasource.storage.GameStorage;
+import org.example.datasource.repository.JpaGameRepository;
 import org.example.domain.repository.GameRepository;
 import org.example.domain.service.GameService;
 import org.example.domain.service.GameServiceImpl;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
  * Конфигурационный класс Spring для настройки компонентов игры.
@@ -15,6 +17,8 @@ import org.springframework.context.annotation.Configuration;
  * Порядок инициализации: Storage -> Repository -> Service.
  */
 @Configuration
+@EnableJpaRepositories(basePackages = "org.example.datasource.repository")
+@EntityScan(basePackages = "org.example.datasource.model")
 public class GameConfig {
 
     /**
@@ -25,15 +29,6 @@ public class GameConfig {
     }
 
     /**
-     * Создает компонент низкоуровневого хранилища данных в оперативной памяти.
-     * @return экземпляр {@link GameStorage}
-     */
-    @Bean
-    public GameStorage gameStorage() {
-        return new GameStorage();
-    }
-
-    /**
      * Создает репозиторий, связывая его с хранилищем.
      * Используется абстракция {@link GameRepository} для изоляции слоя данных.
      *
@@ -41,7 +36,7 @@ public class GameConfig {
      * @return реализация репозитория {@link GameRepositoryImpl}
      */
     @Bean
-    public GameRepository gameRepository(GameStorage storage) {
+    public GameRepository gameRepository(JpaGameRepository storage) {
         return new GameRepositoryImpl(storage);
     }
 

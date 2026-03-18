@@ -1,14 +1,20 @@
 package org.example.datasource.model;
 
+import jakarta.persistence.Embeddable;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 /**
  * Сущность игрового поля для хранения в источнике данных.
  * <p>
  * Представляет собой состояние сетки игры, где каждая ячейка
  * содержит целочисленное значение, соответствующее состоянию (пусто/X/O).
  */
+@Embeddable
 public class GameMapEntity {
 
     /** Двумерный массив, представляющий координаты игрового поля */
+    @JdbcTypeCode(SqlTypes.JSON)
     private final int[][] map;
 
     /** Размер стороны квадратного игрового поля */
