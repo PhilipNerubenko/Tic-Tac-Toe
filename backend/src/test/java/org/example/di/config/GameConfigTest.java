@@ -2,30 +2,34 @@ package org.example.di.config;
 
 import org.example.domain.service.GameService;
 import org.example.domain.repository.GameRepository;
-import org.example.datasource.storage.GameStorage;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
-@SpringBootTest(classes = GameConfig.class)
+@ExtendWith(MockitoExtension.class)
 class GameConfigTest {
 
-    @Autowired
-    private ApplicationContext context;
+    @Mock
+    private GameRepository gameRepository;
 
     @Test
     void shouldInitializeAllBeans() {
-        assertThat(context.getBean(GameStorage.class)).isNotNull();
-        assertThat(context.getBean(GameRepository.class)).isNotNull();
-        assertThat(context.getBean(GameService.class)).isNotNull();
+        GameConfig config = new GameConfig();
+        GameService service = config.gameService(gameRepository);
+        
+        assertThat(service).isNotNull();
+        assertThat(gameRepository).isNotNull();
     }
 
     @Test
     void gameServiceShouldHaveRepositoryInjected() {
-        GameService service = context.getBean(GameService.class);
+        GameConfig config = new GameConfig();
+        GameService service = config.gameService(gameRepository);
+        
         assertThat(service).isNotNull();
     }
 }

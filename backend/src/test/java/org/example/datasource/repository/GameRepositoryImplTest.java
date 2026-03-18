@@ -3,7 +3,6 @@ package org.example.datasource.repository;
 import org.example.datasource.model.GameMapEntity;
 import org.example.datasource.model.GameSessionEntity;
 import org.example.datasource.model.GameStatusEntity;
-import org.example.datasource.storage.GameStorage;
 import org.example.domain.model.GameSession;
 import org.example.domain.model.GameStatus;
 import org.junit.jupiter.api.Test;
@@ -31,7 +30,7 @@ class GameRepositoryImplTest {
     @Test
     void findById_ShouldReturnEmptyOptional_WhenStorageReturnsNull() {
         UUID id = UUID.randomUUID();
-        when(jpaGameRepository.findById(id)).thenReturn(null);
+        when(jpaGameRepository.findById(id)).thenReturn(Optional.empty());
 
         Optional<GameSession> result = repository.findById(id);
 
@@ -64,8 +63,7 @@ class GameRepositoryImplTest {
         GameMapEntity mapEntity = new GameMapEntity(new int[][]{{0}}, 1);
         GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYING);
 
-        Map<UUID, GameSessionEntity> storageMap = Map.of(id, entity);
-        when(jpaGameRepository.getAll()).thenReturn(storageMap);
+        when(jpaGameRepository.findAll()).thenReturn(java.util.List.of(entity));
 
         Map<UUID, GameSession> result = repository.findAll();
 
@@ -74,12 +72,12 @@ class GameRepositoryImplTest {
         assertTrue(result.containsKey(id));
         assertEquals(GameStatus.PLAYING, result.get(id).getStatus());
 
-        verify(jpaGameRepository).getAll();
+        verify(jpaGameRepository).findAll();
     }
 
     @Test
     void findAll_ShouldReturnEmptyMap_WhenStorageIsEmpty() {
-        when(jpaGameRepository.getAll()).thenReturn(Map.of());
+        when(jpaGameRepository.findAll()).thenReturn(java.util.List.of());
 
         Map<UUID, GameSession> result = repository.findAll();
 
