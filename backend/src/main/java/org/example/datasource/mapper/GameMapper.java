@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class GameMapper {
 
     /**
-     * Конструктор по умолчанию.
+     * Конструктор по умолчанию запрещен.
      */
     private GameMapper() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
@@ -30,32 +30,40 @@ public class GameMapper {
      * Преобразует сущность БД в объект доменной области.
      * Используется при извлечении данных из репозитория.
      *
-     * @param gameSessionEntity сущность, полученная из источника данных.
+     * @param entity сущность, полученная из источника данных.
      * @return объект {@link GameSession} или {@code null}, если входные данные отсутствуют.
      */
-    public static GameSession toDomain(GameSessionEntity gameSessionEntity) {
-        if (gameSessionEntity == null) return null;
+    public static GameSession toDomain(GameSessionEntity entity) {
+        if (entity == null) return null;
 
         return new GameSession(
-                gameSessionEntity.getId(),
-                toMap(gameSessionEntity.getGameMap()),
-                toStatus(gameSessionEntity.getStatus())
+                entity.getId(),
+                toMap(entity.getGameMap()),
+                toStatus(entity.getStatus()),
+                entity.getPlayerX(),
+                entity.getPlayerO(),
+                entity.getCurrentPlayer(),
+                entity.getWinner()
         );
     }
 
     /**
      * Преобразует доменную модель сессии в сущность для сохранения в БД.
      *
-     * @param gameSession объект доменной области.
+     * @param domain объект доменной области.
      * @return сущность {@link GameSessionEntity} или {@code null}, если объект пуст.
      */
-    public static GameSessionEntity toEntity(GameSession gameSession) {
-        if (gameSession == null) return null;
+    public static GameSessionEntity toEntity(GameSession domain) {
+        if (domain == null) return null;
 
         return new GameSessionEntity(
-                gameSession.getId(),
-                toMapEntity(gameSession.getGameMap()),
-                toStatusEntity(gameSession.getStatus())
+                domain.getId(),
+                toMapEntity(domain.getGameMap()),
+                toStatusEntity(domain.getStatus()),
+                domain.getPlayerX(),
+                domain.getPlayerO(),
+                domain.getCurrentPlayer(),
+                domain.getWinner()
         );
     }
 
@@ -72,9 +80,6 @@ public class GameMapper {
 
     /**
      * Преобразует объект игрового поля в сущность БД.
-     * <p>
-     * Выполняет <b>глубокое копирование</b> массива данных для предотвращения
-     * побочных эффектов при изменении данных в разных слоях.
      *
      * @param domainMap доменная модель игрового поля.
      * @return сущность игрового поля для БД.
@@ -86,7 +91,6 @@ public class GameMapper {
         int[][] source = domainMap.getMap();
         int[][] target = new int[size][size];
 
-        // Клонируем каждую строку массива отдельно
         for (int i = 0; i < size; i++) {
             target[i] = source[i].clone();
         }
@@ -96,18 +100,17 @@ public class GameMapper {
 
     /**
      * Конвертирует статус игры из домена в сущность БД.
-     * Основано на соответствии строковых имен констант Enum.
      *
      * @param domainStatus статус из бизнес-логики.
      * @return соответствующая сущность статуса для БД.
      */
     private static GameStatusEntity toStatusEntity(GameStatus domainStatus) {
+        if (domainStatus == null) return null;
         return GameStatusEntity.valueOf(domainStatus.name());
     }
 
     /**
      * Преобразует сущность игрового поля обратно в доменную модель.
-     * Также выполняет глубокое копирование данных массива.
      *
      * @param entityMap сущность поля из БД.
      * @return доменная модель поля.
@@ -117,8 +120,8 @@ public class GameMapper {
 
         int size = entityMap.getSize();
         int[][] source = entityMap.getMap();
-
         int[][] data = new int[size][size];
+
         for (int i = 0; i < size; i++) {
             data[i] = source[i].clone();
         }
@@ -129,10 +132,11 @@ public class GameMapper {
     /**
      * Конвертирует статус игры из БД в доменную модель.
      *
-     * @param domainStatusEntity статус из БД.
+     * @param entityStatus статус из БД.
      * @return доменный статус.
      */
-    private static GameStatus toStatus(GameStatusEntity domainStatusEntity) {
-        return GameStatus.valueOf(domainStatusEntity.name());
+    private static GameStatus toStatus(GameStatusEntity entityStatus) {
+        if (entityStatus == null) return null;
+        return GameStatus.valueOf(entityStatus.name());
     }
 }
