@@ -4,6 +4,8 @@ import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
 import org.example.domain.model.GameStatus;
 
+import java.util.UUID;
+
 /**
  * Интерфейс игрового сервиса, определяющий правила и механику "Крестиков-ноликов".
  * <p>
@@ -28,9 +30,10 @@ public interface GameService {
      *
      * @param gameSessionEntity объект сессии.
      * @param gameMap            состояние игрового поля для проверки.
+     * @param requesterId        UUID игрока, делающего ход.
      * @return {@code true}, если поле валидно и не нарушает логику игры.
      */
-    boolean validateMapIntegrity(GameSession gameSessionEntity, GameMap gameMap);
+    boolean validateMapIntegrity(GameSession gameSessionEntity, GameMap gameMap, UUID requesterId);
 
     /**
      * Анализирует игровое поле и определяет текущий статус игры.
@@ -39,7 +42,7 @@ public interface GameService {
      * для выявления победителя, а также проверяет поле на наличие ничьей.
      *
      * @param gameMapEntity состояние поля для анализа.
-     * @return {@link GameStatus} (PLAYING, CROSS_WIN, ZERO_WIN или DRAW).
+     * @return {@link GameStatus} (VICTORY, DRAW или PLAYER_TURN).
      */
     GameStatus checkGameStatus(GameMap gameMapEntity);
 }
