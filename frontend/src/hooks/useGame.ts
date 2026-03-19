@@ -29,7 +29,7 @@ export function useGame(): UseGameReturn {
   const [loading, setLoading] = useState(true);
   const [makingMove, setMakingMove] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { getAuthHeader } = useAuth();
+  const { getAuthHeader, user } = useAuth();
 
   // Fetch with retry logic
   const fetchWithRetry = useCallback(
@@ -53,7 +53,12 @@ export function useGame(): UseGameReturn {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchWithRetry('/game', {
+      // Проверяем, что пользователь авторизован
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
+      const response = await fetchWithRetry(`/game?creatorId=${user.userId}`, {
         method: 'POST',
         headers: {
           ...getAuthHeader(),
@@ -72,14 +77,14 @@ export function useGame(): UseGameReturn {
     } finally {
       setLoading(false);
     }
-  }, [fetchWithRetry]);
+  }, [fetchWithRetry, getAuthHeader, user]);
 
   const makeMove = useCallback(
     async (row: number, col: number) => {
       if (
         !gameData ||
         gameData.gameMap.map[row][col] !== 0 ||
-        gameData.status !== 'PLAYING' ||
+        gameData.status !== 'PLAYER_TURN' ||  // Убрали 'WAITING_FOR_PLAYERS', т.к. нельзя ходить, пока ждем игрока
         makingMove
       ) {
         return;
@@ -101,6 +106,7 @@ export function useGame(): UseGameReturn {
           body: JSON.stringify({
             ...gameData,
             gameMap: { ...gameData.gameMap, map: newMap },
+            currentPlayer: user?.userId, // Передаем информацию о текущем игроке
           }),
         });
         const updated = await response.json();
@@ -117,7 +123,7 @@ export function useGame(): UseGameReturn {
         setMakingMove(false);
       }
     },
-    [gameData, makingMove, fetchWithRetry]
+    [gameData, makingMove, fetchWithRetry, user]
   );
 
   return {

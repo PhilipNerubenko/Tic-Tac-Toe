@@ -35,11 +35,13 @@ function Game() {
   }
 
   const boardSize = gameData.gameMap.size;
+  const { user } = useAuth();
+  
   const statusText =
     {
-      PLAYING: 'Your turn',
-      CROSS_WIN: 'You won! 🎉',
-      ZERO_WIN: 'AI won!',
+      WAITING_FOR_PLAYERS: 'Waiting for players...',
+      PLAYER_TURN: 'Your turn',
+      VICTORY: gameData.winner ? (gameData.winner === user?.userId ? 'You won! 🎉' : 'AI won!') : 'Victory!',
       DRAW: 'Draw!',
     }[gameData.status] || gameData.status;
 
@@ -65,10 +67,25 @@ function Game() {
             <div
               key={`${i}-${j}`}
               className={`cell ${cell === 1 ? 'x-player' : cell === 2 ? 'o-player' : ''}`}
-              onClick={() => makeMove(i, j)}
+              onClick={() => {
+                // Проверяем, может ли пользователь сделать ход
+                const canMakeMove =
+                  gameData.status === 'PLAYER_TURN' &&
+                  !makingMove &&
+                  cell === 0;
+                
+                if (canMakeMove) {
+                  makeMove(i, j);
+                }
+              }}
               style={{
                 opacity: makingMove ? 0.6 : 1,
-                cursor: makingMove ? 'not-allowed' : 'pointer',
+                cursor:
+                  gameData.status === 'PLAYER_TURN' &&
+                  !makingMove &&
+                  cell === 0
+                    ? 'pointer'
+                    : 'not-allowed',
               }}
             >
               {cell === 1 ? 'X' : cell === 2 ? 'O' : ''}

@@ -3,10 +3,12 @@ interface GameMap {
   size: number;
 }
 
-type GameStatus = 'PLAYING' | 'CROSS_WIN' | 'ZERO_WIN' | 'DRAW';
+type GameStatus = 'WAITING_FOR_PLAYERS' | 'PLAYER_TURN' | 'VICTORY' | 'DRAW';
 
 export interface GameData {
   id: string;
   gameMap: GameMap;
   status: GameStatus;
+  currentPlayer?: string; // UUID текущего игрока
+  winner?: string; // UUID победителя
 }
