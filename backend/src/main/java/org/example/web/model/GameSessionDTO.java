@@ -19,6 +19,12 @@ public class GameSessionDTO {
     /** Текущий статус игры в формате, понятном для веб-интерфейса */
     private GameStatusDTO status;
 
+    /** Идентификатор игрока, чей сейчас ход */
+    private UUID currentPlayer;
+
+    /** Идентификатор победителя (заполняется при завершении игры) */
+    private UUID winner;
+
     /**
      * Конструктор без параметров.
      * Необходим для корректной работы десериализаторов JSON (например, Jackson).
@@ -28,14 +34,19 @@ public class GameSessionDTO {
     /**
      * Создает заполненный объект сессии для передачи в ответе API.
      *
-     * @param id      уникальный идентификатор.
-     * @param gameMap данные поля.
-     * @param status  текущий статус.
+     * @param id            уникальный идентификатор сессии.
+     * @param gameMap       данные игрового поля.
+     * @param status        текущий статус игры.
+     * @param currentPlayer ID игрока, который должен ходить.
+     * @param winner        ID победителя (может быть null).
      */
-    public GameSessionDTO(UUID id, GameMapDTO gameMap, GameStatusDTO status) {
+    public GameSessionDTO(UUID id, GameMapDTO gameMap, GameStatusDTO status, 
+                          UUID currentPlayer, UUID winner) {
         this.id = id;
         this.gameMap = gameMap;
         this.status = status;
+        this.currentPlayer = currentPlayer;
+        this.winner = winner;
     }
 
     /**
@@ -63,14 +74,6 @@ public class GameSessionDTO {
     }
 
     /**
-     * Возвращает текущий статус игры.
-     * @return статус игры (например, "PLAYING", "DRAW").
-     */
-    public GameStatusDTO getStatus() {
-        return status;
-    }
-
-    /**
      * Устанавливает объект игрового поля.
      * @param gameMap объект поля для установки.
      */
@@ -79,10 +82,50 @@ public class GameSessionDTO {
     }
 
     /**
+     * Возвращает текущий статус игры.
+     * @return статус игры (например, "PLAYER_TURN", "VICTORY").
+     */
+    public GameStatusDTO getStatus() {
+        return status;
+    }
+
+    /**
      * Устанавливает текущий статус игры.
      * @param status объект статуса для установки.
      */
     public void setStatus(GameStatusDTO status) {
         this.status = status;
+    }
+
+    /**
+     * Возвращает идентификатор игрока, чей сейчас ход.
+     * @return UUID текущего игрока.
+     */
+    public UUID getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    /**
+     * Устанавливает идентификатор текущего игрока.
+     * @param currentPlayer UUID игрока для установки.
+     */
+    public void setCurrentPlayer(UUID currentPlayer) {
+        this.currentPlayer = currentPlayer;
+    }
+
+    /**
+     * Возвращает идентификатор победителя.
+     * @return UUID победителя или null, если игра не окончена.
+     */
+    public UUID getWinner() {
+        return winner;
+    }
+
+    /**
+     * Устанавливает идентификатор победителя.
+     * @param winner UUID победившего игрока.
+     */
+    public void setWinner(UUID winner) {
+        this.winner = winner;
     }
 }

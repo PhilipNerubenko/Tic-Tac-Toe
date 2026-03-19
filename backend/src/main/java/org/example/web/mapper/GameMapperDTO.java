@@ -17,7 +17,7 @@ import org.example.web.model.GameStatusDTO;
 public class GameMapperDTO {
 
     /**
-     * Конструктор по умолчанию.
+     * Конструктор по умолчанию запрещен.
      */
     private GameMapperDTO() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
@@ -35,7 +35,9 @@ public class GameMapperDTO {
         return new GameSessionDTO(
                 session.getId(),
                 toWebMap(session.getGameMap()),
-                GameStatusDTO.valueOf(session.getStatus().name())
+                toWebStatus(session.getStatus()),
+                session.getCurrentPlayer(),
+                session.getWinner()
         );
     }
 
@@ -48,18 +50,20 @@ public class GameMapperDTO {
     public static GameSession toDomain(GameSessionDTO dto) {
         if (dto == null) return null;
 
+        // Используем полный конструктор GameSession для восстановления состояния
         return new GameSession(
                 dto.getId(),
                 toDomainMap(dto.getGameMap()),
-                GameStatus.valueOf(dto.getStatus().name())
+                toDomainStatus(dto.getStatus()),
+                null, // playerX (обычно подтягивается из репозитория/сессии)
+                null, // playerO
+                dto.getCurrentPlayer(),
+                dto.getWinner()
         );
     }
 
-    /**
-     * Создает копию игрового поля в формате DTO.
-     * Выполняет глубокое копирование массива для обеспечения безопасности данных.
-     */
     private static GameMapDTO toWebMap(GameMap domainMap) {
+        if (domainMap == null) return null;
         int[][] rawMap = domainMap.getMap();
         int[][] copy = new int[domainMap.getSize()][domainMap.getSize()];
         for (int i = 0; i < domainMap.getSize(); i++) {
@@ -68,18 +72,24 @@ public class GameMapperDTO {
         return new GameMapDTO(copy, domainMap.getSize());
     }
 
-    /**
-     * Преобразует DTO игрового поля в доменную структуру.
-     */
     private static GameMap toDomainMap(GameMapDTO dtoMap) {
+        if (dtoMap == null) return null;
         int size = dtoMap.getSize();
         int[][] source = dtoMap.getMap();
-
         int[][] target = new int[size][size];
         for (int i = 0; i < size; i++) {
             target[i] = source[i].clone();
         }
-
         return new GameMap(target, size);
+    }
+
+    private static GameStatusDTO toWebStatus(GameStatus status) {
+        if (status == null) return null;
+        return GameStatusDTO.valueOf(status.name());
+    }
+
+    private static GameStatus toDomainStatus(GameStatusDTO dtoStatus) {
+        if (dtoStatus == null) return null;
+        return GameStatus.valueOf(dtoStatus.name());
     }
 }

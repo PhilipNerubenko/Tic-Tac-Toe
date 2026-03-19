@@ -53,10 +53,11 @@ public class GameController {
     @Operation(summary = "Создать новую игру", description = "Инициализирует пустое поле и сохраняет сессию")
     @ApiResponse(responseCode = "201", description = "Игра успешно создана")
     public ResponseEntity<GameSessionDTO> createGame(
-            @Parameter(description = "Размер квадратного поля") @RequestParam(defaultValue = "3") int size) {
+        @RequestParam UUID creatorId,
+        @Parameter(description = "Размер квадратного поля") @RequestParam(defaultValue = "3") int size) {
 
         GameMap newMap = new GameMap(size);
-        GameSession newSession = new GameSession(newMap);
+        GameSession newSession = new GameSession(newMap, creatorId);
         gameRepository.save(newSession);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(GameMapperDTO.toDTO(newSession));
@@ -87,8 +88,8 @@ public class GameController {
         userRequestDTO.setId(id);
         GameSession userSessionState = GameMapperDTO.toDomain(userRequestDTO);
 
-        if (!gameService.validateMapIntegrity(originalSession, userSessionState.getGameMap())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cheat detected or invalid move");
+    if (!gameService.validateMapIntegrity(originalSession, userSessionState.getGameMap(), userRequestDTO.getCurrentPlayer())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid move or integrity violation");
         }
 
         // 3. Обработка логики
