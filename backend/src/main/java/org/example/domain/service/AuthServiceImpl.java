@@ -2,6 +2,7 @@ package org.example.domain.service;
 
 import org.example.domain.model.User;
 import org.example.web.model.SignUpRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -32,13 +33,10 @@ public class AuthServiceImpl implements AuthService {
      * @throws IllegalArgumentException если пользователь с таким логином уже существует.
      */
     @Override
+    @Transactional
     public boolean signUp(SignUpRequest request) {
-        try {
-            userService.register(request.login(), request.password());
-            return true;
-        } catch (IllegalArgumentException e) {
-            throw e;
-        }
+        userService.register(request.login(), request.password());
+        return true;
     }
 
     /**
@@ -50,6 +48,7 @@ public class AuthServiceImpl implements AuthService {
      * @throws IllegalArgumentException если логин или пароль неверны.
      */
     @Override
+    @Transactional(readOnly = true)
     public UUID signIn(String login, String password) {
         if (!userService.validateCredentials(login, password)) {
             throw new IllegalArgumentException("Invalid login or password");

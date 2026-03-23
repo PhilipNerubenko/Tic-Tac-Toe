@@ -36,6 +36,8 @@ public class GameMapperDTO {
                 session.getId(),
                 toWebMap(session.getGameMap()),
                 toWebStatus(session.getStatus()),
+                session.getPlayerX(),
+                session.getPlayerO(),
                 session.getCurrentPlayer(),
                 session.getWinner()
         );
@@ -55,8 +57,8 @@ public class GameMapperDTO {
                 dto.getId(),
                 toDomainMap(dto.getGameMap()),
                 toDomainStatus(dto.getStatus()),
-                null, // playerX (обычно подтягивается из репозитория/сессии)
-                null, // playerO
+                dto.getPlayerX(),
+                dto.getPlayerO(),
                 dto.getCurrentPlayer(),
                 dto.getWinner()
         );

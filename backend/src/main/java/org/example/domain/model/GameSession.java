@@ -10,6 +10,8 @@ import java.util.UUID;
  */
 public class GameSession {
 
+    public static final UUID AI_PLAYER_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
     /** Уникальный идентификатор текущей игровой сессии */
     private final UUID id;
 
@@ -32,16 +34,23 @@ public class GameSession {
     private UUID winner;
 
     /**
-     * Создает новую игровую сессию с уникальным ID.
-     * По умолчанию устанавливает статус {@link GameStatus#WAITING_FOR_PLAYERS}.
-     *
-     * @param map инициализированное игровое поле (например, 3x3).
+     * Создает новую игровую сессию.
+     * @param map игровое поле.
+     * @param creatorId ID создателя.
+     * @param isVsAi если true, вторым игроком сразу назначается компьютер.
      */
-    public GameSession(GameMap map, UUID creatorId) {
+    public GameSession(GameMap map, UUID creatorId, boolean isVsAi) {
         this.id = UUID.randomUUID();
         this.map = map;
         this.playerX = creatorId;
-        this.status = GameStatus.WAITING_FOR_PLAYERS;
+
+        if (isVsAi) {
+            this.playerO = AI_PLAYER_ID;
+            this.currentPlayer = creatorId;
+            this.status = GameStatus.PLAYER_TURN;
+        } else {
+            this.status = GameStatus.WAITING_FOR_PLAYERS;
+        }
     }
 
     /**

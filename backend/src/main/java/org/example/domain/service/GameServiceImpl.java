@@ -1,10 +1,13 @@
 package org.example.domain.service;
 
+import org.example.domain.exception.GameNotFoundException;
+import org.example.domain.exception.IntegrityViolationException;
 import org.example.domain.model.CellType;
 import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
 import org.example.domain.model.GameStatus;
 import org.example.domain.repository.GameRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -68,7 +71,6 @@ public class GameServiceImpl implements GameService {
         if (bestMove[0] != -1) {
             session.getGameMap().setCellValue(bestMove[0], bestMove[1], computerSymbol);
             updateGameProgress(session);
-            repository.save(session);
         }
 
         return bestMove;
@@ -83,6 +85,7 @@ public class GameServiceImpl implements GameService {
      * 3. Добавлен ровно один новый ход (крестик).
      */
     @Override
+    @Transactional
     public boolean validateMapIntegrity(GameSession gameSession, GameMap gameMap, UUID requesterId) {
         Optional<GameSession> savedSessionOpt = repository.findById(gameSession.getId());
 
@@ -182,6 +185,39 @@ public class GameServiceImpl implements GameService {
         if (result == 3) return GameStatus.DRAW;
         if (result != 0) return GameStatus.VICTORY;
         return GameStatus.PLAYER_TURN; 
+    }
+
+    @Override
+    @Transactional
+    public GameSession executeTurn(UUID id, GameSession userMove) {
+        // 1. Поиск существующей игры
+        GameSession originalSession = repository.findById(id)
+                .orElseThrow(() -> new GameNotFoundException(id));
+
+        if (!validateMapIntegrity(originalSession, userMove.getGameMap(), userMove.getCurrentPlayer())) {
+            throw new IntegrityViolationException();
+        }
+
+        // 3. Обработка логики
+        updateGameProgress(userMove);
+
+        // Если игра не закончилась после хода человека — ходит ИИ
+        if (!userMove.isGameOver() && userMove.getCurrentPlayer().equals(GameSession.AI_PLAYER_ID)) {
+            getNextMove(userMove);
+        }
+
+        repository.save(userMove);
+
+        return userMove;
+    }
+
+    @Override
+    @Transactional
+    public GameSession createGame(int size, UUID creatorId, boolean vsAi) {
+        GameMap newMap = new GameMap(size);
+        GameSession newSession = new GameSession(newMap, creatorId, vsAi);
+        repository.save(newSession);
+        return newSession;
     }
 
     /**

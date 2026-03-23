@@ -45,4 +45,8 @@ public interface GameService {
      * @return {@link GameStatus} (VICTORY, DRAW или PLAYER_TURN).
      */
     GameStatus checkGameStatus(GameMap gameMapEntity);
+
+    GameSession executeTurn(UUID id, GameSession userMove);
+
+    GameSession createGame(int size, UUID creatorId, boolean vsAi);
 }

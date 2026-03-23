@@ -3,6 +3,7 @@ package org.example.domain.service;
 import org.example.domain.model.CellType;
 import org.example.domain.model.User;
 import org.example.domain.repository.UserRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -35,6 +36,7 @@ public class UserServiceImpl implements UserService {
      * @throws IllegalArgumentException если пользователь с таким логином уже существует.
      */
     @Override
+    @Transactional
     public User register(String login, String password) {
         if (userRepository.existsByLogin(login)) {
             throw new IllegalArgumentException("User with login '" + login + "' already exists");
@@ -53,6 +55,7 @@ public class UserServiceImpl implements UserService {
      * или пустой {@link Optional}, если пользователь не найден.
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<User> findByLogin(String login) {
         return userRepository.findByLogin(login);
     }
@@ -65,6 +68,7 @@ public class UserServiceImpl implements UserService {
      * или пустой {@link Optional}, если пользователь не найден.
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<User> findById(UUID id) {
         return userRepository.findById(id);
     }
@@ -76,6 +80,7 @@ public class UserServiceImpl implements UserService {
      * @return {@code true}, если пользователь с таким логином существует.
      */
     @Override
+    @Transactional(readOnly = true)
     public boolean existsByLogin(String login) {
         return userRepository.existsByLogin(login);
     }
@@ -88,6 +93,7 @@ public class UserServiceImpl implements UserService {
      * @return {@code true}, если логин и пароль верны.
      */
     @Override
+    @Transactional(readOnly = true)
     public boolean validateCredentials(String login, String password) {
         Optional<User> user = userRepository.findByLogin(login);
         return user.isPresent() && user.get().password().equals(password);

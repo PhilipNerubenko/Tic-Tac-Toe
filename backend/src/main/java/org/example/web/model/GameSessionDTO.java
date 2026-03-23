@@ -19,6 +19,9 @@ public class GameSessionDTO {
     /** Текущий статус игры в формате, понятном для веб-интерфейса */
     private GameStatusDTO status;
 
+    private UUID playerX; // Добавь это
+    private UUID playerO; // Добавь это
+
     /** Идентификатор игрока, чей сейчас ход */
     private UUID currentPlayer;
 
@@ -40,11 +43,12 @@ public class GameSessionDTO {
      * @param currentPlayer ID игрока, который должен ходить.
      * @param winner        ID победителя (может быть null).
      */
-    public GameSessionDTO(UUID id, GameMapDTO gameMap, GameStatusDTO status, 
-                          UUID currentPlayer, UUID winner) {
+    public GameSessionDTO(UUID id, GameMapDTO gameMap, GameStatusDTO status,  UUID playerX, UUID playerO, UUID currentPlayer, UUID winner) {
         this.id = id;
         this.gameMap = gameMap;
         this.status = status;
+        this.playerX = playerX;
+        this.playerO = playerO;
         this.currentPlayer = currentPlayer;
         this.winner = winner;
     }
@@ -95,6 +99,22 @@ public class GameSessionDTO {
      */
     public void setStatus(GameStatusDTO status) {
         this.status = status;
+    }
+
+    public UUID getPlayerX() {
+        return playerX;
+    }
+
+    public void setPlayerX(UUID playerX) {
+        this.playerX = playerX;
+    }
+
+    public UUID getPlayerO() {
+        return playerO;
+    }
+
+    public void setPlayerO(UUID playerO) {
+        this.playerO = playerO;
     }
 
     /**

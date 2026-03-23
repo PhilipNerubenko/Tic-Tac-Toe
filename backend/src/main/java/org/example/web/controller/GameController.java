@@ -27,7 +27,6 @@ import java.util.UUID;
 public class GameController {
 
     private final GameService gameService;
-    private final GameRepository gameRepository;
 
     /**
      * Конструктор для инициализации контроллера.
@@ -36,11 +35,9 @@ public class GameController {
      * для работы с бизнес-логикой и хранилищем данных.
      *
      * @param gameService    сервис для обработки игровой логики и ходов ИИ.
-     * @param gameRepository репозиторий для управления сессиями и их сохранения.
      */
-    public GameController(GameService gameService, GameRepository gameRepository) {
+    public GameController(GameService gameService) {
         this.gameService = gameService;
-        this.gameRepository = gameRepository;
     }
 
     /**
@@ -54,11 +51,10 @@ public class GameController {
     @ApiResponse(responseCode = "201", description = "Игра успешно создана")
     public ResponseEntity<GameSessionDTO> createGame(
         @RequestParam UUID creatorId,
+        @RequestParam(defaultValue = "true") boolean vsAi,
         @Parameter(description = "Размер квадратного поля") @RequestParam(defaultValue = "3") int size) {
 
-        GameMap newMap = new GameMap(size);
-        GameSession newSession = new GameSession(newMap, creatorId);
-        gameRepository.save(newSession);
+        GameSession newSession = gameService.createGame(size, creatorId, vsAi);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(GameMapperDTO.toDTO(newSession));
     }
@@ -80,28 +76,13 @@ public class GameController {
             @PathVariable UUID id,
             @RequestBody GameSessionDTO userRequestDTO) {
 
-        // 1. Поиск существующей игры
-        GameSession originalSession = gameRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
+        // 1. Маппим DTO из веба в чистую модель домена
+        GameSession userMove = GameMapperDTO.toDomain(userRequestDTO);
 
-        // 2. Валидация хода (защита от "читов")
-        userRequestDTO.setId(id);
-        GameSession userSessionState = GameMapperDTO.toDomain(userRequestDTO);
+        // 2. ОДИН вызов сервиса. Вся магия (поиск, валидация, ход ИИ, сохранение) внутри!
+        GameSession updatedSession = gameService.executeTurn(id, userMove);
 
-    if (!gameService.validateMapIntegrity(originalSession, userSessionState.getGameMap(), userRequestDTO.getCurrentPlayer())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid move or integrity violation");
-        }
-
-        // 3. Обработка логики
-        userSessionState.setStatus(gameService.checkGameStatus(userSessionState.getGameMap()));
-
-        // Если игра не закончилась после хода человека — ходит ИИ
-        if (!userSessionState.isGameOver()) {
-            gameService.getNextMove(userSessionState);
-        } else {
-            gameRepository.save(userSessionState);
-        }
-
-        return ResponseEntity.ok(GameMapperDTO.toDTO(userSessionState));
+        // 3. Возвращаем результат, маппим обратно в DTO
+        return ResponseEntity.ok(GameMapperDTO.toDTO(updatedSession));
     }
 }
