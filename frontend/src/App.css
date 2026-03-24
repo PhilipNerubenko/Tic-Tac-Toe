@@ -302,3 +302,74 @@
 .logout-btn:hover:not(:disabled) {
   background-color: rgba(255, 77, 77, 0.3);
 }
+
+/* Стили для экрана выбора режима игры */
+.game-mode-selection-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: #e0e0e0;
+  padding: 1rem;
+  background: var(--bg-color);
+}
+
+.game-mode-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 500px;
+}
+
+.mode-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.mode-btn {
+  width: 100%;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--panel-color);
+  color: #e0e0e0;
+}
+
+.mode-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.1);
+}
+
+.mode-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.ai-mode-btn {
+  background: linear-gradient(45deg, #ff6b6b, #ffa500);
+}
+
+.player-mode-btn {
+  background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+}
+
+.welcome-title {
+  font-size: var(--title-font);
+  margin-bottom: 1rem;
+  background: linear-gradient(45deg, var(--x-color), var(--o-color));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+}

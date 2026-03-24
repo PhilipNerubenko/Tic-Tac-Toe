@@ -10,7 +10,7 @@ interface UseGameReturn {
   loading: boolean;
   makingMove: boolean;
   error: string | null;
-  startNewGame: () => Promise<void>;
+  startNewGame: (vsAi?: boolean) => Promise<void>;
   makeMove: (row: number, col: number) => Promise<void>;
 }
 
@@ -49,7 +49,7 @@ export function useGame(): UseGameReturn {
     []
   );
 
-  const startNewGame = useCallback(async () => {
+  const startNewGame = useCallback(async (vsAi: boolean = true) => {
     setLoading(true);
     setError(null);
     try {
@@ -58,7 +58,7 @@ export function useGame(): UseGameReturn {
         throw new Error('User not authenticated');
       }
       
-      const response = await fetchWithRetry(`/game?creatorId=${user.userId}`, {
+      const response = await fetchWithRetry(`/game?creatorId=${user.userId}&vsAi=${vsAi}`, {
         method: 'POST',
         headers: {
           ...getAuthHeader(),
