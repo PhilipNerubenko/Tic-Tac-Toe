@@ -125,11 +125,11 @@ curl -X POST "http://localhost:8080/auth/login" \
 
 # Создать новую игру (POST /game?size=3)
 curl -s -X POST "http://localhost:8080/game?size=3" \
-     -u "player1:secret123"
+     -u "$TICTACTOE_USER:$TICTACTOE_PASS"
 
 # Получить статус игры
 curl "http://localhost:8080/game/{id}" \
-     -u "player1:secret123"
+     -u "$TICTACTOE_USER:$TICTACTOE_PASS"
 ```
 
 ## 🔧 Установка и запуск

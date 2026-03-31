@@ -1,15 +1,14 @@
-import { createContext, useContext, useState, useCallback, type ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode, useEffect, useRef } from 'react';
 
 interface User {
   userId: string;
   login: string;
-  password: string;
 }
 
 interface AuthContextType {
    user: User | null;
    isAuthenticated: boolean;
-   login: (login: string, password: string) => Promise<boolean>;
+   login: (login: string, password: string, rememberMe?: boolean) => Promise<boolean>;
    register: (login: string, password: string) => Promise<boolean>;
    logout: () => void;
    getAuthHeader: () => Record<string, string>;
@@ -20,18 +19,51 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'tic_tac_toe_auth';
+const PASSWORD_STORAGE_KEY = 'tic_tac_toe_password';
+
+// RFC 7617: кодируем учетные данные Basic Auth с поддержкой UTF-8
+const encodeBasicCredentials = (login: string, password: string) => {
+  const bytes = new TextEncoder().encode(`${login}:${password}`);
+  let binary = '';
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+};
+
+// Используем sessionStorage для пароля (очищается при закрытии вкладки)
+// и localStorage для userId/login (с опцией "запомнить")
+function getStoredPassword(): string | null {
+  return sessionStorage.getItem(PASSWORD_STORAGE_KEY);
+}
+
+function setStoredPassword(password: string): void {
+  sessionStorage.setItem(PASSWORD_STORAGE_KEY, password);
+}
+
+function clearStoredPassword(): void {
+  sessionStorage.removeItem(PASSWORD_STORAGE_KEY);
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const passwordRef = useRef<string | null>(null);
 
   // Загружаем сохраненные учетные данные при монтировании
   useEffect(() => {
     const savedAuth = localStorage.getItem(STORAGE_KEY);
     if (savedAuth) {
       try {
-        const userData = JSON.parse(savedAuth);
-        setUser(userData);
+        const userData = JSON.parse(savedAuth) as User;
+        const savedPassword = getStoredPassword();
+        if (savedPassword) {
+          setUser(userData);
+          passwordRef.current = savedPassword;
+        } else {
+          // Пароль не сохранён в sessionStorage — очищаем данные
+          localStorage.removeItem(STORAGE_KEY);
+        }
       } catch (err) {
         console.error('Failed to parse saved auth data:', err);
         localStorage.removeItem(STORAGE_KEY);
@@ -39,10 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = useCallback(async (login: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (login: string, password: string, _rememberMe?: boolean): Promise<boolean> => {
     try {
       setError(null);
-      const credentials = btoa(`${login}:${password}`);
+      const credentials = encodeBasicCredentials(login, password);
       const response = await fetch('/auth/signin', {
         method: 'POST',
         headers: {
@@ -56,10 +88,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
-      const userData = { userId: data.userId, login, password };
+      const userData: User = { userId: data.userId, login };
       setUser(userData);
-      // Сохраняем в localStorage
+      passwordRef.current = password;
+      // Сохраняем userId и login в localStorage
       localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+      // Сохраняем пароль в sessionStorage (очищается при закрытии вкладки)
+      setStoredPassword(password);
       return true;
     } catch (err) {
       setError('Connection error');
@@ -94,8 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getAuthHeader = useCallback((): Record<string, string> => {
-    if (!user) return {};
-    const credentials = btoa(`${user.login}:${user.password}`);
+    if (!user || !passwordRef.current) return {};
+    const credentials = encodeBasicCredentials(user.login, passwordRef.current);
     return { Authorization: `Basic ${credentials}` };
   }, [user]);
 
@@ -119,7 +154,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     setError(null);
+    passwordRef.current = null;
     localStorage.removeItem(STORAGE_KEY);
+    clearStoredPassword();
   }, []);
 
   return (
