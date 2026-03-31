@@ -3,13 +3,17 @@ package org.example.web.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.domain.model.User;
 import org.example.domain.service.AuthService;
+import org.example.domain.service.UserService;
 import org.example.web.model.SignUpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -22,6 +26,7 @@ import java.util.UUID;
 public class AuthController {
 
     private final AuthService authService;
+    private final UserService userService;
 
     /**
      * Конструктор для инициализации контроллера.
@@ -31,8 +36,9 @@ public class AuthController {
      *
      * @param authService сервис для обработки авторизации.
      */
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, UserService userService) {
         this.authService = authService;
+        this.userService = userService;
     }
 
     /**
@@ -77,6 +83,31 @@ public class AuthController {
             return ResponseEntity.ok(Map.of("userId", userId));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    /**
+     * Получает информацию о пользователе по UUID.
+     *
+     * @param id UUID пользователя.
+     * @return ResponseEntity с информацией о пользователе.
+     */
+    @GetMapping("/{id}")
+    @Operation(summary = "Получить информацию о пользователе", description = "Возвращает информацию о пользователе по его UUID")
+    @ApiResponse(responseCode = "200", description = "Пользователь найден")
+    @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    @ApiResponse(responseCode = "401", description = "Не авторизован")
+    public ResponseEntity<Map<String, Object>> getUserById(
+            @PathVariable UUID id) {
+        Optional<User> userOptional = userService.findById(id);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", user.id());
+            userInfo.put("login", user.login());
+            return ResponseEntity.ok(userInfo);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 }

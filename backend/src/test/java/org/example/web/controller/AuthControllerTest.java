@@ -1,6 +1,8 @@
 package org.example.web.controller;
 
+import org.example.domain.model.User;
 import org.example.domain.service.AuthService;
+import org.example.domain.service.UserService;
 import org.example.web.model.SignUpRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,10 +12,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Base64;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -28,6 +33,9 @@ class AuthControllerTest {
 
     @MockBean
     private AuthService authService;
+    
+    @MockBean
+    private UserService userService;
 
     @Test
     void signUp_ShouldReturnSuccess() throws Exception {
@@ -71,5 +79,28 @@ class AuthControllerTest {
     void signIn_ShouldReturnBadRequest_WhenAuthorizationHeaderMissing() throws Exception {
         mockMvc.perform(post("/auth/signin"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getUserById_ShouldReturnUserInfo() throws Exception {
+        UUID userId = UUID.randomUUID();
+        User testUser = new User(userId, "testuser", "testpassword", null);
+
+        when(userService.findById(userId)).thenReturn(Optional.of(testUser));
+
+        mockMvc.perform(get("/auth/{id}", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(userId.toString()))
+                .andExpect(jsonPath("$.login").value("testuser"));
+    }
+
+    @Test
+    void getUserById_ShouldReturnNotFound_WhenUserDoesNotExist() throws Exception {
+        UUID userId = UUID.randomUUID();
+
+        when(userService.findById(userId)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/auth/{id}", userId))
+                .andExpect(status().isNotFound());
     }
 }

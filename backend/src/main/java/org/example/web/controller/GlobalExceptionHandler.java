@@ -2,6 +2,7 @@ package org.example.web.controller;
 
 import org.example.domain.exception.GameNotFoundException;
 import org.example.domain.exception.IntegrityViolationException;
+import org.example.domain.exception.NotYourTurnException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -26,6 +27,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IntegrityViolationException.class)
     public ResponseEntity<Object> handleViolation(IntegrityViolationException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(NotYourTurnException.class)
+    public ResponseEntity<Object> handleNotYourTurn(NotYourTurnException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
     private ResponseEntity<Object> buildResponse(HttpStatus status, String message) {
