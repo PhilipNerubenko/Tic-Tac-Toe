@@ -3,6 +3,7 @@ package org.example.web.controller;
 import org.example.domain.exception.GameDomainException;
 import org.example.domain.exception.GameNotFoundException;
 import org.example.domain.exception.IntegrityViolationException;
+import org.example.domain.exception.NotGameParticipantException;
 import org.example.domain.exception.NotYourTurnException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(GameDomainException.class)
     public ResponseEntity<Object> handleGameDomain(GameDomainException ex) {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(NotGameParticipantException.class)
+    public ResponseEntity<Object> handleNotGameParticipant(NotGameParticipantException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

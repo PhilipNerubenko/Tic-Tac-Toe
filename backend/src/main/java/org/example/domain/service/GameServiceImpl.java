@@ -3,6 +3,7 @@ package org.example.domain.service;
 import org.example.domain.exception.GameDomainException;
 import org.example.domain.exception.GameNotFoundException;
 import org.example.domain.exception.IntegrityViolationException;
+import org.example.domain.exception.NotGameParticipantException;
 import org.example.domain.exception.NotYourTurnException;
 import org.example.domain.model.CellType;
 import org.example.domain.model.GameMap;
@@ -177,7 +178,7 @@ public class GameServiceImpl implements GameService {
                 .orElseThrow(() -> new GameNotFoundException(gameId));
 
         if (!session.isPlayer(userId)) {
-            throw new GameDomainException("Пользователь не является участником игры");
+            throw new NotGameParticipantException("Пользователь не является участником игры");
         }
 
         return session;
@@ -190,7 +191,7 @@ public class GameServiceImpl implements GameService {
                 .orElseThrow(() -> new GameNotFoundException(gameId));
 
         if (!session.isPlayer(userId)) {
-            throw new GameDomainException("Пользователь не является участником игры");
+            throw new NotGameParticipantException("Пользователь не является участником игры");
         }
 
         if (session.isGameOver() || session.getStatus() == GameStatus.OPPONENT_LEFT) {
