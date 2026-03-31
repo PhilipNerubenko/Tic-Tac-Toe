@@ -13,7 +13,7 @@
 Полнофункциональное веб-приложение классической игры "Крестики-нолики" с системой авторизации, профилем пользователя и современной многоуровневой архитектурой. Проект демонстрирует лучшие практики разработки с использованием Spring Boot для backend и React для frontend.
 
 <p align="center">
-  <img src="./assets/game-preview.png" width="600" alt="Tic-Tac-Toe Preview">
+  <img src="./assets/game_preview.png" width="600" alt="Tic-Tac-Toe Preview">
 </p>
 
 ## Особенности
@@ -22,11 +22,31 @@
 - ✅ **Frontend на React 19.2.0** — современный реактивный пользовательский интерфейс
 - ✅ **TypeScript 5.9.3** — строгая типизация для надежного кода
 - ✅ **PostgreSQL 15** — надёжное хранение данных игр и пользователей
-- ✅ **Spring Security** — JWT-авторизация и регистрация
+- ✅ **Spring Security** — базовая аутентификация и регистрация
 - ✅ **Docker Compose** — простое одноэтапное развертывание (3 контейнера: DB, Backend, Frontend)
 - ✅ **Слоистая архитектура** — разделение на слои (Web, Domain, Datasource)
 - ✅ **Dependency Injection** — управление зависимостями через Spring DI
 - ✅ **API документация** — интерактивная Swagger UI
+
+## Скриншоты
+
+### Форма входа
+
+<p align="center">
+  <img src="./assets/form_for_login.png" width="600" alt="Форма входа">
+</p>
+
+### Форма регистрации
+
+<p align="center">
+  <img src="./assets/form_for_register.png" width="600" alt="Форма регистрации">
+</p>
+
+### Меню выбора режима игры
+
+<p align="center">
+  <img src="./assets/game_mode_menu.png" width="600" alt="Меню выбора режима игры">
+</p>
 
 ## Структура проекта
 
@@ -105,11 +125,11 @@ curl -X POST "http://localhost:8080/auth/login" \
 
 # Создать новую игру (POST /game?size=3)
 curl -s -X POST "http://localhost:8080/game?size=3" \
-     -H "Authorization: Bearer <your-token>"
+     -u "player1:secret123"
 
 # Получить статус игры
 curl "http://localhost:8080/game/{id}" \
-     -H "Authorization: Bearer <your-token>"
+     -u "player1:secret123"
 ```
 
 ## 🔧 Установка и запуск
@@ -251,7 +271,7 @@ Backend приложения — это **Headless REST API**, разработ�
 | Метод | Endpoint | Описание |
 | --- | --- | --- |
 | `POST` | `/auth/signup` | Регистрация нового пользователя |
-| `POST` | `/auth/login` | Авторизация (возвращает JWT токен) |
+| `POST` | `/auth/login` | Авторизация (возвращает cookie сессии) |
 | `GET` | `/user/profile` | Профиль текущего пользователя |
 | `POST` | `/game?size=3` | Создать новую игру |
 | `POST` | `/game/{id}` | Сделать ход |
@@ -312,7 +332,7 @@ Backend приложения — это **Headless REST API**, разработ�
 - **Java 18**
 - **Spring Boot 3.3.4**
 - **SpringDoc OpenAPI 2.6.0**
-- **Spring Security** — авторизация и JWT
+- **Spring Security** — авторизация и базовая аутентификация
 - **Spring Data JPA** — работа с БД
 - **PostgreSQL** — основная база данных
 - **H2** — база данных для тестов

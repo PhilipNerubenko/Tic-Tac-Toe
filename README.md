@@ -13,7 +13,7 @@
 A full-featured web application for the classic Tic-Tac-Toe game with user authentication, player profiles, and modern multi-layer architecture. This project demonstrates best practices in development using Spring Boot for the backend and React for the frontend.
 
 <p align="center">
-  <img src="./assets/game-preview.png" width="600" alt="Tic-Tac-Toe Preview">
+  <img src="./assets/game_preview.png" width="600" alt="Tic-Tac-Toe Preview">
 </p>
 
 ## Features
@@ -22,11 +22,31 @@ A full-featured web application for the classic Tic-Tac-Toe game with user authe
 - ✅ **React 19.2.0 Frontend** — Modern reactive user interface
 - ✅ **TypeScript 5.9.3** — Strict typing for reliable code
 - ✅ **PostgreSQL 15** — Reliable storage for game and user data
-- ✅ **Spring Security** — JWT authentication and registration
+- ✅ **Spring Security** — Basic authentication and registration
 - ✅ **Docker Compose** — Simple one-step deployment (3 containers: DB, Backend, Frontend)
 - ✅ **Layered Architecture** — Clean separation (Web, Domain, Datasource layers)
 - ✅ **Dependency Injection** — Spring DI container management
 - ✅ **API Documentation** — Interactive Swagger UI
+
+## Screenshots
+
+### Login Form
+
+<p align="center">
+  <img src="./assets/form_for_login.png" width="600" alt="Login Form">
+</p>
+
+### Registration Form
+
+<p align="center">
+  <img src="./assets/form_for_register.png" width="600" alt="Registration Form">
+</p>
+
+### Game Mode Menu
+
+<p align="center">
+  <img src="./assets/game_mode_menu.png" width="600" alt="Game Mode Menu">
+</p>
 
 ## Project Structure
 
@@ -105,11 +125,11 @@ curl -X POST "http://localhost:8080/auth/login" \
 
 # Create a new game (POST /game?size=3)
 curl -s -X POST "http://localhost:8080/game?size=3" \
-     -H "Authorization: Bearer <your-token>"
+     -u "player1:secret123"
 
 # Get game status
 curl "http://localhost:8080/game/{id}" \
-     -H "Authorization: Bearer <your-token>"
+     -u "player1:secret123"
 ```
 
 ## 🔧 Installation and Setup
@@ -251,7 +271,7 @@ The backend is a **Headless REST API** built on Spring Boot 3. It provides full 
 | Method | Endpoint | Description |
 | --- | --- | --- |
 | `POST` | `/auth/signup` | Register a new user |
-| `POST` | `/auth/login` | Login (returns JWT token) |
+| `POST` | `/auth/login` | Login (returns session cookie) |
 | `GET` | `/user/profile` | Current user profile |
 | `POST` | `/game?size=3` | Create a new game |
 | `POST` | `/game/{id}` | Make a move |
@@ -312,7 +332,7 @@ You can test all API endpoints directly from the Swagger interface!
 - **Java 18**
 - **Spring Boot 3.3.4**
 - **SpringDoc OpenAPI 2.6.0**
-- **Spring Security** — Authentication and JWT
+- **Spring Security** — Authentication and basic auth
 - **Spring Data JPA** — Database access
 - **PostgreSQL** — Primary database
 - **H2** — Test database
