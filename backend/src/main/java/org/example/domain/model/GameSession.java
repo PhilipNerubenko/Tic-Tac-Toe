@@ -92,6 +92,7 @@ public class GameSession {
         }
         this.playerO = opponentId;
         this.currentPlayer = playerX; // Игра начинается с игрока X
+        updateLastActiveAt();
         this.status = GameStatus.PLAYER_TURN;
     }
 
