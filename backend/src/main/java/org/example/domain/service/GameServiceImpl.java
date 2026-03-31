@@ -101,7 +101,7 @@ public class GameServiceImpl implements GameService {
         GameSession originalSession = repository.findByIdForUpdate(id)
                 .orElseThrow(() -> new GameNotFoundException(id));
 
-        if (!originalSession.getCurrentPlayer().equals(authenticatedUserId)) {
+        if (!authenticatedUserId.equals(originalSession.getCurrentPlayer())) {
             throw new NotYourTurnException("Вы не можете ходить, сейчас очередь другого игрока");
         }
 
