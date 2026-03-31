@@ -22,6 +22,12 @@ public class MinimaxAiStrategy implements AiMoveStrategy {
     public int[] calculateMove(GameSession session, CellType aiSymbol) {
         GameMap map = session.getGameMap();
 
+        // Guard: if the board is already terminal, return no-op move
+        int status = evaluateBoardStatus(map);
+        if (status != 0) {
+            return new int[]{-1, -1};
+        }
+
         int bestScore = Integer.MIN_VALUE;
         int[] bestMove = {-1, -1};
 
