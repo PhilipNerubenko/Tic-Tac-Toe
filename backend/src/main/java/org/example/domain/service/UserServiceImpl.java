@@ -3,6 +3,7 @@ package org.example.domain.service;
 import org.example.domain.model.CellType;
 import org.example.domain.model.User;
 import org.example.domain.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
@@ -18,13 +19,18 @@ public class UserServiceImpl implements UserService {
     /** Репозиторий для работы с пользователями */
     private final UserRepository userRepository;
 
+    /** Кодировщик паролей для безопасного хранения */
+    private final PasswordEncoder passwordEncoder;
+
     /**
      * Создает экземпляр сервиса.
      *
-     * @param userRepository репозиторий для работы с пользователями.
+     * @param userRepository    репозиторий для работы с пользователями.
+     * @param passwordEncoder   кодировщик паролей.
      */
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -42,7 +48,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("User with login '" + login + "' already exists");
         }
 
-        User user = new User(UUID.randomUUID(), login, password, CellType.CROSS);
+        User user = new User(UUID.randomUUID(), login, passwordEncoder.encode(password), CellType.CROSS);
         userRepository.save(user);
         return user;
     }
@@ -96,6 +102,6 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public boolean validateCredentials(String login, String password) {
         Optional<User> user = userRepository.findByLogin(login);
-        return user.isPresent() && user.get().password().equals(password);
+        return user.isPresent() && passwordEncoder.matches(password, user.get().password());
     }
 }

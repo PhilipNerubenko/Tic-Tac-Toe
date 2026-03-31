@@ -10,6 +10,7 @@ import org.example.domain.service.*;
 import org.example.web.filter.AuthFilter;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -63,8 +64,9 @@ class GameConfigTest {
     void userService_ShouldCreateUserServiceImpl() {
         GameConfig config = new GameConfig();
         UserRepository repo = Mockito.mock(UserRepository.class);
+        PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
 
-        UserService service = config.userService(repo);
+        UserService service = config.userService(repo, passwordEncoder);
 
         assertNotNull(service);
         assertInstanceOf(UserServiceImpl.class, service);

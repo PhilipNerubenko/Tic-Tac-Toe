@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * Конфигурационный класс Spring для настройки компонентов игры.
@@ -45,8 +46,8 @@ public class GameConfig {
     }
 
     @Bean
-    public UserService userService(UserRepository repository) {
-        return new UserServiceImpl(repository);
+    public UserService userService(UserRepository repository, PasswordEncoder passwordEncoder) {
+        return new UserServiceImpl(repository, passwordEncoder);
     }
 
     @Bean
