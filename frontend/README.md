@@ -4,7 +4,7 @@ A modern React + TypeScript + Vite frontend for the Tic-Tac-Toe game with authen
 
 ## 🚀 Features
 
-- **Authentication System**: User registration, login, and JWT token management via AuthContext
+- **Authentication System**: User registration, login, and basic auth management via AuthContext
 - **User Profiles**: View player statistics and account information
 - **Dynamic Board Size**: Supports game boards of any size (not limited to 3x3)
 - **Real-time Game Updates**: Instant feedback on moves with loading states
@@ -83,7 +83,7 @@ src/
 
 1. **Register**: New users create an account via RegisterForm
 2. **Login**: Existing users authenticate via LoginForm
-3. **Token Storage**: JWT tokens are stored and sent with each request
+3. **Token Storage**: Basic auth credentials are sent with each request
 4. **Profile Access**: Authenticated users can view their profile
 
 ### Game Flow
@@ -123,7 +123,7 @@ server: {
 #### Authentication
 
 - `POST /auth/signup` — Register a new user
-- `POST /auth/login` — Login and receive JWT token
+- `POST /auth/login` — Login and receive session
 
 #### User
 
@@ -180,7 +180,7 @@ The frontend automatically supports any board size returned by the backend throu
 
 - Verify backend Spring Security is properly configured
 - Check CORS settings in SecurityConfig
-- Ensure JWT token is being sent in Authorization header
+- Ensure Basic Auth credentials are being sent in Authorization header
 
 ### Board not loading
 
