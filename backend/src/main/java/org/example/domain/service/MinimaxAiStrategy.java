@@ -65,8 +65,8 @@ public class MinimaxAiStrategy implements AiMoveStrategy {
         if (status != 0 && status != DRAW_RESULT) return depth - 10;
         if (status == DRAW_RESULT) return 0;
 
-        // Ограничение глубины для оптимизации производительности
-        if (depth >= MAX_DEPTH) {
+        // Ограничение глубины для оптимизации производительности (только для больших досок)
+        if (map.getSize() > 3 && depth >= MAX_DEPTH) {
             return evaluateBoardHeuristic(map, aiSymbol);
         }
 
