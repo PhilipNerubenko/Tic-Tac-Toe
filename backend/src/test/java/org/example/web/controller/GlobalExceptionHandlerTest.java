@@ -61,4 +61,16 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.error").value("Forbidden"))
                 .andExpect(jsonPath("$.message").value("Not your turn"));
     }
+
+    @Test
+    void handleIllegalArgument_ShouldReturn400() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(gameController.getGameById(id)).thenThrow(new IllegalArgumentException("Invalid argument"));
+
+        mockMvc.perform(get("/game/" + id))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Invalid argument"));
+    }
 }
