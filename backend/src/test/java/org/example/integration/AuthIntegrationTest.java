@@ -82,7 +82,7 @@ class AuthIntegrationTest {
                         .content(signUpJson))
                 .andExpect(status().isCreated());
 
-        // Повторная регистрация с тем же логином — теперь 400
+        // Повторная регистрация с тем же логином — 400 Bad Request
         mockMvc.perform(post("/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(signUpJson))

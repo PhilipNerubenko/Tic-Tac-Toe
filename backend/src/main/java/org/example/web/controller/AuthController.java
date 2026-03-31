@@ -52,10 +52,15 @@ public class AuthController {
     @Operation(summary = "Регистрация пользователя", description = "Создает новую учетную запись пользователя")
     @ApiResponse(responseCode = "201", description = "Пользователь успешно зарегистрирован")
     @ApiResponse(responseCode = "400", description = "Пользователь с таким логином уже существует")
-    public ResponseEntity<Map<String, Boolean>> signUp(@RequestBody SignUpRequest request) {
-        RegistrationCommand command = new RegistrationCommand(request.login(), request.password());
-        boolean result = authService.signUp(command);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", result));
+    public ResponseEntity<Map<String, Object>> signUp(@RequestBody SignUpRequest request) {
+        try {
+            RegistrationCommand command = new RegistrationCommand(request.login(), request.password());
+            boolean result = authService.signUp(command);
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", result));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 
     /**

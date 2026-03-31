@@ -1,5 +1,7 @@
 package org.example.domain.model;
 
+import org.example.domain.exception.InvalidMoveException;
+
 /**
  * Доменная модель игрового поля для игры в "Крестики-нолики".
  * <p>
@@ -73,11 +75,11 @@ public class GameMap {
      * @param row  индекс строки (0 до size-1).
      * @param col  индекс столбца (0 до size-1).
      * @param type тип устанавливаемого значения (крестик, нолик или пусто).
-     * @throws IllegalArgumentException если координаты выходят за пределы игрового поля.
+     * @throws InvalidMoveException если координаты выходят за пределы игрового поля.
      */
     public void setCellValue(int row, int col, CellType type) {
         if (row < 0 || row >= size || col < 0 || col >= size) {
-            throw new IllegalArgumentException("Coordinates are out of bounds.");
+            throw new InvalidMoveException("Coordinates are out of bounds.");
         }
         map[row][col] = type.getValue();
     }

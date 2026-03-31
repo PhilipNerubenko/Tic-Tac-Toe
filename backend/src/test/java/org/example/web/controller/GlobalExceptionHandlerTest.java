@@ -2,6 +2,7 @@ package org.example.web.controller;
 
 import org.example.domain.exception.GameNotFoundException;
 import org.example.domain.exception.IntegrityViolationException;
+import org.example.domain.exception.InvalidMoveException;
 import org.example.domain.exception.NotYourTurnException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,14 +64,14 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleIllegalArgument_ShouldReturn400() throws Exception {
+    void handleInvalidMove_ShouldReturn400() throws Exception {
         UUID id = UUID.randomUUID();
-        when(gameController.getGameById(id)).thenThrow(new IllegalArgumentException("Invalid argument"));
+        when(gameController.getGameById(id)).thenThrow(new InvalidMoveException("Invalid move"));
 
         mockMvc.perform(get("/game/" + id))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Invalid argument"));
+                .andExpect(jsonPath("$.message").value("Invalid move"));
     }
 }
