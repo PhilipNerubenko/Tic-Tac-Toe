@@ -1,0 +1,13 @@
+name: Codeball AI Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  codeball:
+    runs-on: ubuntu-latest
+    name: AI Code Review
+    steps:
+      - name: Codeball AI Code Review
+        uses: sturdy-dev/codeball-action@v2.6.0
