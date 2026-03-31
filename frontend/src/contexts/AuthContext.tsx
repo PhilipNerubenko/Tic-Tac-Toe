@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode, useEffect } from 'react';
 
 interface User {
   userId: string;
@@ -7,20 +7,37 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  login: (login: string, password: string) => Promise<boolean>;
-  register: (login: string, password: string) => Promise<boolean>;
-  logout: () => void;
-  getAuthHeader: () => { Authorization: string } | {};
-  error: string | null;
-}
+   user: User | null;
+   isAuthenticated: boolean;
+   login: (login: string, password: string) => Promise<boolean>;
+   register: (login: string, password: string) => Promise<boolean>;
+   logout: () => void;
+   getAuthHeader: () => Record<string, string>;
+   fetchUserById: (userId: string) => Promise<{ id: string; login: string } | null>;
+   error: string | null;
+ }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const STORAGE_KEY = 'tic_tac_toe_auth';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Загружаем сохраненные учетные данные при монтировании
+  useEffect(() => {
+    const savedAuth = localStorage.getItem(STORAGE_KEY);
+    if (savedAuth) {
+      try {
+        const userData = JSON.parse(savedAuth);
+        setUser(userData);
+      } catch (err) {
+        console.error('Failed to parse saved auth data:', err);
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+  }, []);
 
   const login = useCallback(async (login: string, password: string): Promise<boolean> => {
     try {
@@ -39,7 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
-      setUser({ userId: data.userId, login, password });
+      const userData = { userId: data.userId, login, password };
+      setUser(userData);
+      // Сохраняем в localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
       return true;
     } catch (err) {
       setError('Connection error');
@@ -73,16 +93,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    setError(null);
-  }, []);
-
-  const getAuthHeader = useCallback(() => {
+  const getAuthHeader = useCallback((): Record<string, string> => {
     if (!user) return {};
     const credentials = btoa(`${user.login}:${user.password}`);
     return { Authorization: `Basic ${credentials}` };
   }, [user]);
+
+  const fetchUserById = useCallback(async (userId: string): Promise<{ id: string; login: string } | null> => {
+    try {
+      const headers = getAuthHeader();
+      const response = await fetch(`/auth/${userId}`, {
+        headers: Object.keys(headers).length ? headers : undefined,
+      });
+      if (!response.ok) {
+        return null;
+      }
+      const data = await response.json();
+      return { id: data.id, login: data.login };
+    } catch (err) {
+      console.error('Fetch user error:', err);
+      return null;
+    }
+  }, [getAuthHeader]);
+
+  const logout = useCallback(() => {
+    setUser(null);
+    setError(null);
+    localStorage.removeItem(STORAGE_KEY);
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -93,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         logout,
         getAuthHeader,
+        fetchUserById,
         error,
       }}
     >
