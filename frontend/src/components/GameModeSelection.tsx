@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import type { GameData } from '../interfaces/game';
 
@@ -11,14 +11,27 @@ export const GameModeSelection: React.FC<GameModeSelectionProps> = ({ onStartGam
   const [activeGames, setActiveGames] = useState<GameData[]>([]);
   const [loading, setLoading] = useState(false);
   const { getAuthHeader, user } = useAuth();
+  const isFetchingRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const fetchActiveGames = async () => {
+  const fetchActiveGames = useCallback(async () => {
+    // Защита от параллельных запросов
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
+    // Отменяем предыдущий запрос, если он ещё выполняется
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     try {
       setLoading(true);
       const response = await fetch('/game/active', {
         headers: {
           ...getAuthHeader(),
         },
+        signal: abortControllerRef.current.signal,
       });
       if (response.ok) {
         const gamesData = await response.json();
@@ -27,22 +40,36 @@ export const GameModeSelection: React.FC<GameModeSelectionProps> = ({ onStartGam
         setActiveGames(gamesList);
       }
     } catch (error) {
-      console.error('Error fetching active games:', error);
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Error fetching active games:', error);
+      }
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
-  };
+  }, [getAuthHeader]);
 
   useEffect(() => {
     // Fetch active games immediately
     fetchActiveGames();
     
-    // Set up interval to refresh every 3 seconds (polling)
-    const interval = setInterval(fetchActiveGames, 3000);
+    // Set up timeout to refresh after 3 seconds (avoids overlapping requests)
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const scheduleRefresh = () => {
+      timeoutId = setTimeout(() => {
+        fetchActiveGames().then(scheduleRefresh);
+      }, 3000);
+    };
+    scheduleRefresh();
     
-    // Cleanup interval on component unmount
-    return () => clearInterval(interval);
-  }, []);
+    // Cleanup on component unmount
+    return () => {
+      clearTimeout(timeoutId);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [fetchActiveGames]);
 
   const canJoinGame = (game: GameData) => {
     // Можно присоединиться если:
