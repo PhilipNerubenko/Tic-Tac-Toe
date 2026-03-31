@@ -1,11 +1,11 @@
 # Крестики-нолики — Backend
 
-REST API серверная часть на Spring Boot 3.3.4 для игры «Крестики-нолики» со слоистой архитектурой, JWT-аутентификацией и хранением данных в PostgreSQL.
+REST API серверная часть на Spring Boot 3.3.4 для игры «Крестики-нолики» со слоистой архитектурой, базовой аутентификацией и хранением данных в PostgreSQL.
 
 ## 🚀 Возможности
 
 - **Spring Boot 3.3.4** — современный Java-фреймворк с встроенными лучшими практиками
-- **Spring Security + JWT** — аутентификация и авторизация на основе токенов
+- **Spring Security + Basic Auth** — базовая аутентификация и авторизация
 - **PostgreSQL** — надёжное хранение данных пользователей и игровых сессий
 - **Spring Data JPA** — удобная абстракция для работы с данными через Hibernate
 - **Swagger UI** — интерактивная документация API по адресу `/swagger-ui.html`
@@ -103,14 +103,14 @@ src/
 │   │   │   ├── AuthController  # /auth/signup, /auth/login
 │   │   │   ├── GameController  # Эндпоинты /game
 │   │   │   └── GlobalExceptionHandler
-│   │   ├── filter/             # AuthFilter (валидация JWT)
+│   │   ├── filter/             # AuthFilter (валидация Basic Auth)
 │   │   ├── mapper/             # Мапперы DTO ↔ Entity
 │   │   └── model/              # DTO запросов/ответов
 │   ├── domain/                 # Слой бизнес-логики
 │   │   ├── model/              # Доменные сущности (Game, GameMap, User)
 │   │   ├── repository/         # Интерфейсы репозиториев
 │   │   ├── service/            # Бизнес-логика
-│   │   │   ├── AuthService     # Управление JWT-токенами
+│   │   │   ├── AuthService     # Управление базовой аутентификацией
 │   │   │   ├── GameService     # Правила игры и логика ИИ
 │   │   │   └── UserService     # Управление пользователями
 │   │   └── exception/          # Пользовательские исключения
@@ -120,7 +120,7 @@ src/
 │   │   └── repository/         # Реализации Spring Data JPA
 │   └── di/config/              # Классы @Configuration Spring
 │       ├── GameConfig          # Конфигурация игровых бинов
-│       └── SecurityConfig      # Настройка Spring Security + JWT
+│       └── SecurityConfig      # Настройка Spring Security + Basic Auth
 ├── resources/
 │   └── application.properties  # Конфигурация сервера и БД
 └── test/java/org/example/      # Модульные и интеграционные тесты
@@ -131,8 +131,8 @@ src/
 ### Процесс аутентификации
 
 1. **Регистрация**: `POST /auth/signup` создаёт новый аккаунт пользователя
-2. **Вход**: `POST /auth/login` возвращает JWT-токен
-3. **Авторизация**: Добавьте заголовок `Authorization: Bearer <token>` к последующим запросам
+2. **Вход**: `POST /auth/login` выполняет аутентификацию пользователя
+3. **Авторизация**: Добавьте заголовок `Authorization: Basic <base64-encoded-credentials>` к последующим запросам
 
 ### Игровой процесс
 
@@ -148,7 +148,7 @@ src/
 | Метод | Эндпоинт | Описание | Требуется авторизация |
 | --- | --- | --- | --- |
 | `POST` | `/auth/signup` | Регистрация нового пользователя | Нет |
-| `POST` | `/auth/login` | Вход и получение JWT-токена | Нет |
+| `POST` | `/auth/login` | Вход и получение сессии | Нет |
 
 #### Пользователь
 
@@ -329,7 +329,7 @@ curl -X POST http://localhost:8080/auth/signup \
 
 ### Паттерн слоистой архитектуры
 
-- **web**: HTTP-запросы/ответы, DTO, валидация, JWT-фильтр
+- **web**: HTTP-запросы/ответы, DTO, валидация, Basic Auth-фильтр
 - **domain**: Чистая бизнес-логика, правила игры, стратегия ИИ, сервис аутентификации
 - **datasource**: Хранение данных через JPA/Hibernate + PostgreSQL
 - **di**: Конфигурация бинов Spring, конфигурация безопасности

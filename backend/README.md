@@ -1,11 +1,11 @@
 # Tic-Tac-Toe Backend
 
-A Spring Boot 3.3.4 REST API backend for the Tic-Tac-Toe game with layered architecture, JWT authentication, and PostgreSQL persistence.
+A Spring Boot 3.3.4 REST API backend for the Tic-Tac-Toe game with layered architecture, basic authentication, and PostgreSQL persistence.
 
 ## 🚀 Features
 
 - **Spring Boot 3.3.4** — Modern Java framework with built-in best practices
-- **Spring Security + JWT** — Token-based authentication and authorization
+- **Spring Security + Basic Auth** — Basic authentication and authorization
 - **PostgreSQL** — Reliable data persistence for users and game sessions
 - **Spring Data JPA** — Clean data access abstraction with Hibernate
 - **Swagger UI** — Interactive API documentation at `/swagger-ui.html`
@@ -103,14 +103,14 @@ src/
 │   │   │   ├── AuthController  # /auth/signup, /auth/login
 │   │   │   ├── GameController  # /game endpoints
 │   │   │   └── GlobalExceptionHandler
-│   │   ├── filter/             # AuthFilter (JWT validation)
+│   │   ├── filter/             # AuthFilter (Basic Auth validation)
 │   │   ├── mapper/             # DTO ↔ Entity mappers
 │   │   └── model/              # Request/Response DTOs
 │   ├── domain/                 # Business logic layer
 │   │   ├── model/              # Domain entities (Game, GameMap, User)
 │   │   ├── repository/         # Repository interfaces
 │   │   ├── service/            # Business logic
-│   │   │   ├── AuthService     # JWT token management
+│   │   │   ├── AuthService     # Basic auth management
 │   │   │   ├── GameService     # Game rules and AI logic
 │   │   │   └── UserService     # User management
 │   │   └── exception/          # Custom exceptions
@@ -120,7 +120,7 @@ src/
 │   │   └── repository/         # Spring Data JPA implementations
 │   └── di/config/              # Spring @Configuration classes
 │       ├── GameConfig          # Game beans configuration
-│       └── SecurityConfig      # Spring Security + JWT setup
+│       └── SecurityConfig      # Spring Security + Basic Auth setup
 ├── resources/
 │   └── application.properties  # Server and database config
 └── test/java/org/example/      # Unit & integration tests
@@ -131,8 +131,8 @@ src/
 ### Authentication Flow
 
 1. **Register**: `POST /auth/signup` creates a new user account
-2. **Login**: `POST /auth/login` returns a JWT token
-3. **Authenticate**: Include `Authorization: Bearer <token>` header in subsequent requests
+2. **Login**: `POST /auth/login` authenticates the user
+3. **Authenticate**: Include `Authorization: Basic <base64-encoded-credentials>` header in subsequent requests
 
 ### Game Flow
 
@@ -148,7 +148,7 @@ src/
 | Method | Endpoint | Description | Auth Required |
 | --- | --- | --- | --- |
 | `POST` | `/auth/signup` | Register new user | No |
-| `POST` | `/auth/login` | Login and get JWT token | No |
+| `POST` | `/auth/login` | Login and get session | No |
 
 #### User
 
@@ -329,7 +329,7 @@ Check CORS and network configurations.
 
 ### Layered Architecture Pattern
 
-- **web**: HTTP requests/responses, DTOs, validation, JWT filter
+- **web**: HTTP requests/responses, DTOs, validation, Basic Auth filter
 - **domain**: Pure business logic, game rules, AI strategy, auth service
 - **datasource**: Data persistence via JPA/Hibernate + PostgreSQL
 - **di**: Spring bean configuration, Security configuration
