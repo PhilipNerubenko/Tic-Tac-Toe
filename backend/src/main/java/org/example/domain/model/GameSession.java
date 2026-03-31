@@ -33,6 +33,9 @@ public class GameSession {
     /**  Идентификатор победителя, если игра завершена */
     private UUID winner;
 
+    /** Время последнего действия игрока */
+    private java.time.Instant lastActiveAt;
+
     /**
      * Создает новую игровую сессию.
      * @param map игровое поле.
@@ -43,6 +46,7 @@ public class GameSession {
         this.id = UUID.randomUUID();
         this.map = map;
         this.playerX = creatorId;
+        this.lastActiveAt = java.time.Instant.now();
 
         if (isVsAi) {
             this.playerO = AI_PLAYER_ID;
@@ -65,7 +69,7 @@ public class GameSession {
      * @param currentPlayer UUID игрока, который должен сделать ход.
      * @param winner UUID победителя, если игра завершена (может быть null).
      */
-    public GameSession(UUID id, GameMap map, GameStatus status, 
+    public GameSession(UUID id, GameMap map, GameStatus status,
                        UUID playerX, UUID playerO, UUID currentPlayer, UUID winner) {
         this.id = id;
         this.map = map;
@@ -74,6 +78,7 @@ public class GameSession {
         this.playerO = playerO;
         this.currentPlayer = currentPlayer;
         this.winner = winner;
+        this.lastActiveAt = java.time.Instant.now();
     }
 
     public void joinOpponent(UUID opponentId) {
@@ -211,5 +216,38 @@ public class GameSession {
      */
     public boolean isWaitingForMoveFromPlayer(UUID playerId) {
         return status == GameStatus.PLAYER_TURN && playerId != null && playerId.equals(currentPlayer);
+    }
+    
+    /**
+     * Проверяет, является ли указанный пользователь участником игры.
+     * @param playerId UUID игрока для проверки.
+     * @return {@code true}, если игрок является участником игры (playerX или playerO).
+     */
+    public boolean isPlayer(UUID playerId) {
+        return (playerX != null && playerX.equals(playerId)) ||
+               (playerO != null && playerO.equals(playerId));
+    }
+    
+    /**
+     * Возвращает время последнего действия игрока.
+     * @return время последнего действия
+     */
+    public java.time.Instant getLastActiveAt() {
+        return lastActiveAt;
+    }
+    
+    /**
+     * Устанавливает время последнего действия игрока.
+     * @param lastActiveAt время последнего действия
+     */
+    public void setLastActiveAt(java.time.Instant lastActiveAt) {
+        this.lastActiveAt = lastActiveAt;
+    }
+    
+    /**
+     * Обновляет время последнего действия игрока.
+     */
+    public void updateLastActiveAt() {
+        this.lastActiveAt = java.time.Instant.now();
     }
 }

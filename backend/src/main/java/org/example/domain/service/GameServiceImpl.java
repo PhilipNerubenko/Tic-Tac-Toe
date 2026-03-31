@@ -2,6 +2,7 @@ package org.example.domain.service;
 
 import org.example.domain.exception.GameNotFoundException;
 import org.example.domain.exception.IntegrityViolationException;
+import org.example.domain.exception.NotYourTurnException;
 import org.example.domain.model.CellType;
 import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
@@ -44,9 +45,8 @@ public class GameServiceImpl implements GameService {
     public int[] getNextMove(GameSession session) {
         GameMap map = session.getGameMap();
         
-        // Динамически определяем символ ИИ
-        boolean isComputerX = session.getCurrentPlayer() != null && session.getCurrentPlayer().equals(session.getPlayerX());
-        CellType computerSymbol = isComputerX ? CellType.CROSS : CellType.ZERO;
+        // Определяем символ ИИ на основе того, за какого игрока (X или O) играет ИИ
+        CellType computerSymbol = session.getPlayerO().equals(GameSession.AI_PLAYER_ID) ? CellType.ZERO : CellType.CROSS;
 
         int bestScore = Integer.MIN_VALUE;
         int[] bestMove = {-1, -1};
@@ -86,38 +86,38 @@ public class GameServiceImpl implements GameService {
      */
     @Override
     @Transactional
-    public boolean validateMapIntegrity(GameSession gameSession, GameMap gameMap, UUID requesterId) {
-        Optional<GameSession> savedSessionOpt = repository.findById(gameSession.getId());
-
-        if (savedSessionOpt.isEmpty()) {
+    public boolean validateMapIntegrity(GameSession originalSession, GameMap newMap) {
+        // Проверяем, что игра в процессе и ход ожидается
+        if (originalSession.getStatus() != GameStatus.PLAYER_TURN) {
             return false;
         }
 
-        GameSession savedSession = savedSessionOpt.get();
-
-        // Проверка: очередь ли этого игрока?
-        if (!savedSession.isWaitingForMoveFromPlayer(requesterId)) {
+        // Проверяем, что размеры совпадают
+        if (newMap.getSize() != originalSession.getGameMap().getSize()) {
             return false;
         }
 
-        CellType expectedSymbol = requesterId.equals(savedSession.getPlayerX()) ? CellType.CROSS : CellType.ZERO;
+        // Определяем символ, который должен поставить текущий игрок (из originalSession)
+        CellType expectedSymbol = originalSession.getCurrentPlayer().equals(originalSession.getPlayerX())
+                ? CellType.CROSS
+                : CellType.ZERO;
 
-        int[][] oldMap = savedSession.getGameMap().getMap();
-        int[][] newMap = gameMap.getMap();
-        int size = savedSession.getGameMap().getSize();
+        int[][] oldMap = originalSession.getGameMap().getMap();
+        int[][] newMapArray = newMap.getMap();
+        int size = originalSession.getGameMap().getSize();
 
         int newMoves = 0;
 
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 // Запрещено менять уже установленные знаки
-                if (oldMap[i][j] != CellType.EMPTY.getValue() && oldMap[i][j] != newMap[i][j]) {
+                if (oldMap[i][j] != CellType.EMPTY.getValue() && oldMap[i][j] != newMapArray[i][j]) {
                     return false;
                 }
 
-                if (oldMap[i][j] == CellType.EMPTY.getValue() && newMap[i][j] != CellType.EMPTY.getValue()) {
+                if (oldMap[i][j] == CellType.EMPTY.getValue() && newMapArray[i][j] != CellType.EMPTY.getValue()) {
                     // Игрок должен ходить только своим символом
-                    if (newMap[i][j] != expectedSymbol.getValue()) {
+                    if (newMapArray[i][j] != expectedSymbol.getValue()) {
                         return false;
                     }
                     newMoves++;
@@ -189,26 +189,48 @@ public class GameServiceImpl implements GameService {
 
     @Override
     @Transactional
-    public GameSession executeTurn(UUID id, GameSession userMove) {
-        // 1. Поиск существующей игры
+    public GameSession executeTurn(UUID id, GameSession userMove, UUID authenticatedUserId) {
+        // 1. Загружаем оригинальную сессию из БД (источник истины)
         GameSession originalSession = repository.findById(id)
                 .orElseThrow(() -> new GameNotFoundException(id));
 
-        if (!validateMapIntegrity(originalSession, userMove.getGameMap(), userMove.getCurrentPlayer())) {
+        // 2. Проверка авторизации: текущий игрок в сессии должен совпадать с аутентифицированным пользователем
+        if (!originalSession.getCurrentPlayer().equals(authenticatedUserId)) {
+            throw new NotYourTurnException("Вы не можете ходить, сейчас очередь другого игрока");
+        }
+
+        // 3. Валидация целостности карты (проверяем, что ход сделан тем игроком, который должен ходить, и что добавлен ровно один новый символ)
+        if (!validateMapIntegrity(originalSession, userMove.getGameMap())) {
             throw new IntegrityViolationException();
         }
 
-        // 3. Обработка логики
-        updateGameProgress(userMove);
-
-        // Если игра не закончилась после хода человека — ходит ИИ
-        if (!userMove.isGameOver() && userMove.getCurrentPlayer().equals(GameSession.AI_PLAYER_ID)) {
-            getNextMove(userMove);
+        // 3. Обновляем карту в originalSession, копируя значения из userMove.getGameMap()
+        GameMap newMap = userMove.getGameMap();
+        int size = newMap.getSize();
+        int[][] newMapArray = newMap.getMap();
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                int value = newMapArray[i][j];
+                CellType cellType = (value == 0) ? CellType.EMPTY : (value == 1) ? CellType.CROSS : CellType.ZERO;
+                originalSession.getGameMap().setCellValue(i, j, cellType);
+            }
         }
 
-        repository.save(userMove);
+        // 4. Обновляем прогресс игры (проверка победы, ничьей, переключение хода)
+        updateGameProgress(originalSession);
 
-        return userMove;
+        // 5. Если игра не завершена и теперь ход ИИ, делаем ход ИИ
+        if (!originalSession.isGameOver() && originalSession.getCurrentPlayer().equals(GameSession.AI_PLAYER_ID)) {
+            getNextMove(originalSession);
+        }
+
+        // 6. Обновляем время последнего действия
+        originalSession.updateLastActiveAt();
+        
+        // 7. Сохраняем обновленную сессию
+        repository.save(originalSession);
+
+        return originalSession;
     }
 
     @Override
@@ -219,6 +241,78 @@ public class GameServiceImpl implements GameService {
         repository.save(newSession);
         return newSession;
     }
+
+    // @Override
+    @Override
+    @Transactional
+    public GameSession joinPlayer(UUID sessionId, UUID guestId) {
+        GameSession session = repository.findById(sessionId)
+                .orElseThrow(() -> new org.example.domain.exception.GameNotFoundException(sessionId));
+
+        // Check if it's an AI game
+        if (session.getPlayerO() != null && session.getPlayerO().equals(GameSession.AI_PLAYER_ID)) {
+            throw new org.example.domain.exception.GameDomainException("Cannot join AI game");
+        }
+
+        // Check if game is already full (has both players)
+        if (session.getPlayerO() != null && !session.getPlayerO().equals(GameSession.AI_PLAYER_ID)) {
+            throw new org.example.domain.exception.GameDomainException("Game is already full");
+        }
+
+        if (session.getStatus() != org.example.domain.model.GameStatus.WAITING_FOR_PLAYERS) {
+            throw new org.example.domain.exception.GameDomainException("Game has already started");
+        }
+
+        // Join the opponent to the game
+        session.joinOpponent(guestId);
+
+        // Update last active time
+        session.updateLastActiveAt();
+        
+        repository.save(session);
+        return session;
+    }
+
+    @Override
+    public java.util.Map<UUID, GameSession> getActiveGames() {
+        return repository.findAll().entrySet().stream()
+                .filter(entry -> {
+                    GameSession session = entry.getValue();
+                    // Include only multiplayer games that are waiting for players
+                    // Check if it's not an AI game (playerO is not AI) and playerO is null (only one player joined)
+                    boolean isMultiplayerWaitingGame =
+                        session.getPlayerO() == null &&
+                        session.getStatus() == org.example.domain.model.GameStatus.WAITING_FOR_PLAYERS &&
+                        session.getPlayerX() != null; // Make sure there's at least one player
+                    
+                    return isMultiplayerWaitingGame;
+                })
+                .collect(java.util.stream.Collectors.toMap(
+                    java.util.Map.Entry::getKey,
+                    java.util.Map.Entry::getValue
+                ));
+    }
+    //             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Игра не найдена"));
+
+    //     if (session.isVsAi()) {
+    //         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Нельзя присоединиться к игре с ИИ");
+    //     }
+
+    //     if (session.getGuestId() != null) {
+    //         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "В игре уже есть второй игрок");
+    //     }
+
+    //     if (session.getCreatorId().equals(guestId)) {
+    //         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Вы не можете играть сами с собой");
+    //     }
+
+    //     // Устанавливаем второго игрока
+    //     session.setPlayerO(guestId);
+    //     // Опционально: меняем статус игры на IN_PROGRESS
+    //     session.setStatus(GameStatus.PLAYER_TURN);
+
+    //     return repository.save(session);
+    // }
 
     /**
      * Рекурсивный алгоритм поиска оптимального решения.
@@ -328,5 +422,70 @@ public class GameServiceImpl implements GameService {
             if (map[startRow + i * dRow][startCol + i * dCol] != first) return false;
         }
         return true;
+    }
+    @Override
+    public java.util.Optional<GameSession> findById(UUID id) {
+        return repository.findById(id);
+    }
+    
+    @Override
+    @Transactional
+    public GameSession findGameForUser(UUID gameId, UUID userId) {
+        GameSession session = repository.findById(gameId)
+                .orElseThrow(() -> new GameNotFoundException(gameId));
+        
+        if (!session.isPlayer(userId)) {
+            throw new org.example.domain.exception.GameDomainException("Пользователь не является участником игры");
+        }
+        
+        return session;
+    }
+    
+    @Override
+    @Transactional
+    public GameSession checkOpponentLeft(UUID gameId, UUID userId, long timeoutSeconds) {
+        GameSession session = repository.findById(gameId)
+                .orElseThrow(() -> new GameNotFoundException(gameId));
+        
+        if (!session.isPlayer(userId)) {
+            throw new org.example.domain.exception.GameDomainException("Пользователь не является участником игры");
+        }
+        
+        // Проверяем, не завершена ли уже игра
+        if (session.isGameOver() || session.getStatus() == GameStatus.OPPONENT_LEFT) {
+            return session;
+        }
+        
+        // Проверяем, прошло ли достаточно времени с последнего действия
+        java.time.Instant lastActive = session.getLastActiveAt();
+        if (lastActive != null) {
+            long secondsSinceLastAction = java.time.Duration.between(lastActive, java.time.Instant.now()).getSeconds();
+            
+            if (secondsSinceLastAction > timeoutSeconds) {
+                // Игрок покинул игру - определяем, кто именно
+                UUID leftPlayer = session.getCurrentPlayer();
+                UUID winnerId = null;
+                
+                if (leftPlayer != null) {
+                    // Определяем победителя - это другой игрок
+                    if (leftPlayer.equals(session.getPlayerX())) {
+                        winnerId = session.getPlayerO();
+                    } else {
+                        winnerId = session.getPlayerX();
+                    }
+                    
+                    // Не засчитываем победу, если победитель - это AI
+                    if (winnerId != null && !winnerId.equals(GameSession.AI_PLAYER_ID)) {
+                        session.setWinner(winnerId);
+                    }
+                }
+                
+                session.setStatus(GameStatus.OPPONENT_LEFT);
+                session.setCurrentPlayer(null);
+                repository.save(session);
+            }
+        }
+        
+        return session;
     }
 }

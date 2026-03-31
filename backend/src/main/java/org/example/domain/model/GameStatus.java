@@ -21,5 +21,8 @@ public enum GameStatus {
     DRAW,
 
     /** Победа конкретного игрока. */
-    VICTORY
+    VICTORY,
+    
+    /** Игрок покинул игру (второй игрок автоматически побеждает). */
+    OPPONENT_LEFT
 }

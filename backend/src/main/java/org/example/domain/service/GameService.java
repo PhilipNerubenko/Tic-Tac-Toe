@@ -30,10 +30,9 @@ public interface GameService {
      *
      * @param gameSessionEntity объект сессии.
      * @param gameMap            состояние игрового поля для проверки.
-     * @param requesterId        UUID игрока, делающего ход.
      * @return {@code true}, если поле валидно и не нарушает логику игры.
      */
-    boolean validateMapIntegrity(GameSession gameSessionEntity, GameMap gameMap, UUID requesterId);
+    boolean validateMapIntegrity(GameSession gameSessionEntity, GameMap gameMap);
 
     /**
      * Анализирует игровое поле и определяет текущий статус игры.
@@ -46,7 +45,27 @@ public interface GameService {
      */
     GameStatus checkGameStatus(GameMap gameMapEntity);
 
-    GameSession executeTurn(UUID id, GameSession userMove);
+    GameSession executeTurn(UUID id, GameSession userMove, UUID authenticatedUserId);
 
     GameSession createGame(int size, UUID creatorId, boolean vsAi);
+
+    GameSession joinPlayer(UUID id, UUID guestId);
+    
+    java.util.Map<UUID, GameSession> getActiveGames();
+    
+    java.util.Optional<GameSession> findById(UUID id);
+    
+    GameSession findGameForUser(UUID gameId, UUID userId);
+    
+    /**
+     * Проверяет, покинул ли один из игроков игру.
+     * Если игрок не активен более заданного времени (timeoutSeconds),
+     * игра завершается с статусом OPPONENT_LEFT.
+     *
+     * @param gameId ID игры
+     * @param userId ID пользователя, который проверяет статус
+     * @param timeoutSeconds время в секундах, после которого игрок считается покинувшим
+     * @return обновленная сессия с новым статусом, если игрок покинул
+     */
+    GameSession checkOpponentLeft(UUID gameId, UUID userId, long timeoutSeconds);
 }

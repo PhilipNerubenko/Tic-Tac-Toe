@@ -28,6 +28,9 @@ public class GameSessionDTO {
     /** Идентификатор победителя (заполняется при завершении игры) */
     private UUID winner;
 
+    /** Время последнего действия игрока */
+    private java.time.Instant lastActiveAt;
+
     /**
      * Конструктор без параметров.
      * Необходим для корректной работы десериализаторов JSON (например, Jackson).
@@ -51,6 +54,7 @@ public class GameSessionDTO {
         this.playerO = playerO;
         this.currentPlayer = currentPlayer;
         this.winner = winner;
+        this.lastActiveAt = java.time.Instant.now();
     }
 
     /**
@@ -147,5 +151,21 @@ public class GameSessionDTO {
      */
     public void setWinner(UUID winner) {
         this.winner = winner;
+    }
+    
+    /**
+     * Возвращает время последнего действия игрока.
+     * @return время последнего действия
+     */
+    public java.time.Instant getLastActiveAt() {
+        return lastActiveAt;
+    }
+    
+    /**
+     * Устанавливает время последнего действия игрока.
+     * @param lastActiveAt время последнего действия
+     */
+    public void setLastActiveAt(java.time.Instant lastActiveAt) {
+        this.lastActiveAt = lastActiveAt;
     }
 }
