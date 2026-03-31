@@ -45,6 +45,7 @@ public class GameRepositoryImpl implements GameRepository {
 
     /**
      * Находит игровую сессию по её уникальному идентификатору.
+     * Используется для операций только на чтение (без блокировки).
      *
      * @param id UUID сессии.
      * @return {@link Optional}, содержащий доменную модель игры,
@@ -53,6 +54,21 @@ public class GameRepositoryImpl implements GameRepository {
     @Override
     @Transactional
     public Optional<GameSession> findById(UUID id) {
+        return jpaGameRepository.findByIdReadOnly(id)
+                .map(GameMapper::toDomain);
+    }
+
+    /**
+     * Находит игровую сессию с пессимистичной блокировкой для записи.
+     * Используется перед операциями изменения (executeTurn, joinPlayer).
+     *
+     * @param id UUID сессии.
+     * @return {@link Optional}, содержащий доменную модель игры,
+     * или пустой Optional, если игра не найдена.
+     */
+    @Override
+    @Transactional
+    public Optional<GameSession> findByIdForUpdate(UUID id) {
         return jpaGameRepository.findById(id)
                 .map(GameMapper::toDomain);
     }

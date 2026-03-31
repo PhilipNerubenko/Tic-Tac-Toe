@@ -96,7 +96,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public GameSession executeTurn(UUID id, GameSession userMove, UUID authenticatedUserId) {
-        GameSession originalSession = repository.findById(id)
+        GameSession originalSession = repository.findByIdForUpdate(id)
                 .orElseThrow(() -> new GameNotFoundException(id));
 
         if (!originalSession.getCurrentPlayer().equals(authenticatedUserId)) {
@@ -130,7 +130,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public GameSession joinPlayer(UUID sessionId, UUID guestId) {
-        GameSession session = repository.findById(sessionId)
+        GameSession session = repository.findByIdForUpdate(sessionId)
                 .orElseThrow(() -> new GameNotFoundException(sessionId));
 
         if (session.getPlayerO() != null && session.getPlayerO().equals(GameSession.AI_PLAYER_ID)) {
@@ -182,7 +182,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public GameSession checkOpponentLeft(UUID gameId, UUID userId, long timeoutSeconds) {
-        GameSession session = repository.findById(gameId)
+        GameSession session = repository.findByIdForUpdate(gameId)
                 .orElseThrow(() -> new GameNotFoundException(gameId));
 
         if (!session.isPlayer(userId)) {
