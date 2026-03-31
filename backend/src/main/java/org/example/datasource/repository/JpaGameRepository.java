@@ -16,4 +16,7 @@ public interface JpaGameRepository extends CrudRepository<GameSessionEntity, UUI
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select g from GameSessionEntity g where g.id = :id")
     Optional<GameSessionEntity> findById(@Param("id") UUID id);
+
+    @Query("select g from GameSessionEntity g where g.id = :id")
+    Optional<GameSessionEntity> findByIdReadOnly(@Param("id") UUID id);
 }
