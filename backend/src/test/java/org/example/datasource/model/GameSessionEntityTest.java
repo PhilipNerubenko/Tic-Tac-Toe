@@ -41,4 +41,59 @@ class GameSessionEntityTest {
         assertEquals(map, entity.getGameMap(), "Should preserve the provided map");
         assertEquals(status, entity.getStatus(), "Should preserve the provided status");
     }
+
+    @Test
+    void setPlayerX_ShouldUpdatePlayerX() {
+        GameMapEntity map = new GameMapEntity(3);
+        GameSessionEntity entity = new GameSessionEntity(map);
+        UUID playerX = UUID.randomUUID();
+
+        entity.setPlayerX(playerX);
+
+        assertEquals(playerX, entity.getPlayerX());
+    }
+
+    @Test
+    void setPlayerO_ShouldUpdatePlayerO() {
+        GameMapEntity map = new GameMapEntity(3);
+        GameSessionEntity entity = new GameSessionEntity(map);
+        UUID playerO = UUID.randomUUID();
+
+        entity.setPlayerO(playerO);
+
+        assertEquals(playerO, entity.getPlayerO());
+    }
+
+    @Test
+    void setCurrentPlayer_ShouldUpdateCurrentPlayer() {
+        GameMapEntity map = new GameMapEntity(3);
+        GameSessionEntity entity = new GameSessionEntity(map);
+        UUID currentPlayer = UUID.randomUUID();
+
+        entity.setCurrentPlayer(currentPlayer);
+
+        assertEquals(currentPlayer, entity.getCurrentPlayer());
+    }
+
+    @Test
+    void setWinner_ShouldUpdateWinner() {
+        GameMapEntity map = new GameMapEntity(3);
+        GameSessionEntity entity = new GameSessionEntity(map);
+        UUID winner = UUID.randomUUID();
+
+        entity.setWinner(winner);
+
+        assertEquals(winner, entity.getWinner());
+    }
+
+    @Test
+    void setLastActiveAt_ShouldUpdateTime() {
+        GameMapEntity map = new GameMapEntity(3);
+        GameSessionEntity entity = new GameSessionEntity(map);
+        java.time.Instant newTime = java.time.Instant.now().minusSeconds(60);
+
+        entity.setLastActiveAt(newTime);
+
+        assertEquals(newTime, entity.getLastActiveAt());
+    }
 }

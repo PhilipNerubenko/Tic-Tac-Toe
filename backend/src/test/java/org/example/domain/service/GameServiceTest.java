@@ -1,5 +1,8 @@
 package org.example.domain.service;
 
+import org.example.domain.exception.GameDomainException;
+import org.example.domain.exception.GameNotFoundException;
+import org.example.domain.exception.IntegrityViolationException;
 import org.example.domain.exception.NotYourTurnException;
 import org.example.domain.model.CellType;
 import org.example.domain.model.GameMap;
@@ -10,6 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,7 +50,6 @@ class GameServiceTest {
         assertThat(session.getGameMap().getMap()[0][2]).isEqualTo(CellType.ZERO.getValue());
         assertThat(session.getStatus()).isEqualTo(GameStatus.VICTORY);
         assertThat(session.getWinner()).isEqualTo(GameSession.AI_PLAYER_ID);
-        Mockito.verify(gameRepository, Mockito.times(1)).save(session);
     }
 
     @Test
@@ -85,8 +89,6 @@ class GameServiceTest {
         assertThat(session.getGameMap().getMap()[2][0]).isEqualTo(CellType.ZERO.getValue());
 
         assertThat(session.getStatus()).isEqualTo(GameStatus.DRAW);
-
-        Mockito.verify(gameRepository, Mockito.times(1)).save(session);
     }
 
     @Test
@@ -239,5 +241,194 @@ class GameServiceTest {
         assertThat(result.getCurrentPlayer()).isEqualTo(playerO);
         // Карта должна обновиться: (0,0) = CROSS
         assertThat(result.getGameMap().getMap()[0][0]).isEqualTo(CellType.CROSS.getValue());
+    }
+
+    @Test
+    void createGame_ShouldCreateAndSaveSession() {
+        int size = 3;
+        UUID creatorId = UUID.randomUUID();
+
+        GameSession result = gameService.createGame(size, creatorId, true);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getPlayerX()).isEqualTo(creatorId);
+        assertThat(result.getPlayerO()).isEqualTo(GameSession.AI_PLAYER_ID);
+        assertThat(result.getGameMap().getSize()).isEqualTo(size);
+        Mockito.verify(gameRepository, Mockito.times(1)).save(result);
+    }
+
+    @Test
+    void createGame_ShouldCreateMultiplayerGame_WhenVsAiFalse() {
+        int size = 3;
+        UUID creatorId = UUID.randomUUID();
+
+        GameSession result = gameService.createGame(size, creatorId, false);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getPlayerX()).isEqualTo(creatorId);
+        assertThat(result.getPlayerO()).isNull();
+        assertThat(result.getStatus()).isEqualTo(GameStatus.WAITING_FOR_PLAYERS);
+    }
+
+    @Test
+    void joinPlayer_ShouldJoinOpponent() {
+        UUID sessionId = UUID.randomUUID();
+        UUID creatorId = UUID.randomUUID();
+        UUID guestId = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.WAITING_FOR_PLAYERS, creatorId, null, creatorId, null);
+
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        GameSession result = gameService.joinPlayer(sessionId, guestId);
+
+        assertThat(result.getPlayerO()).isEqualTo(guestId);
+        assertThat(result.getStatus()).isEqualTo(GameStatus.PLAYER_TURN);
+        assertThat(result.getCurrentPlayer()).isEqualTo(creatorId);
+        Mockito.verify(gameRepository, Mockito.times(1)).save(session);
+    }
+
+    @Test
+    void joinPlayer_ShouldThrowException_WhenAiGame() {
+        UUID sessionId = UUID.randomUUID();
+        UUID creatorId = UUID.randomUUID();
+        UUID guestId = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(map, creatorId, true);
+
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        assertThrows(GameDomainException.class, () -> gameService.joinPlayer(sessionId, guestId));
+    }
+
+    @Test
+    void joinPlayer_ShouldThrowException_WhenGameFull() {
+        UUID sessionId = UUID.randomUUID();
+        UUID creatorId = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
+        UUID guestId = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.WAITING_FOR_PLAYERS, creatorId, playerO, creatorId, null);
+
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        assertThrows(GameDomainException.class, () -> gameService.joinPlayer(sessionId, guestId));
+    }
+
+    @Test
+    void joinPlayer_ShouldThrowException_WhenGameStarted() {
+        UUID sessionId = UUID.randomUUID();
+        UUID creatorId = UUID.randomUUID();
+        UUID guestId = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, creatorId, null, creatorId, null);
+
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        assertThrows(GameDomainException.class, () -> gameService.joinPlayer(sessionId, guestId));
+    }
+
+    @Test
+    void joinPlayer_ShouldThrowException_WhenSessionNotFound() {
+        UUID sessionId = UUID.randomUUID();
+        UUID guestId = UUID.randomUUID();
+
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.empty());
+
+        assertThrows(GameNotFoundException.class, () -> gameService.joinPlayer(sessionId, guestId));
+    }
+
+    @Test
+    void getActiveGames_ShouldReturnOnlyWaitingMultiplayerGames() {
+        UUID sessionId1 = UUID.randomUUID();
+        UUID sessionId2 = UUID.randomUUID();
+        UUID sessionId3 = UUID.randomUUID();
+        UUID creatorId = UUID.randomUUID();
+
+        // Waiting multiplayer game
+        GameMap map1 = new GameMap(3);
+        GameSession waitingGame = new GameSession(sessionId1, map1, GameStatus.WAITING_FOR_PLAYERS, creatorId, null, creatorId, null);
+
+        // AI game (should be excluded)
+        GameSession aiGame = new GameSession(map1, creatorId, true);
+
+        // Full game (should be excluded)
+        UUID playerO = UUID.randomUUID();
+        GameSession fullGame = new GameSession(sessionId3, map1, GameStatus.PLAYER_TURN, creatorId, playerO, creatorId, null);
+
+        Map<UUID, GameSession> allGames = new HashMap<>();
+        allGames.put(sessionId1, waitingGame);
+        allGames.put(sessionId2, aiGame);
+        allGames.put(sessionId3, fullGame);
+
+        Mockito.when(gameRepository.findAll()).thenReturn(allGames);
+
+        Map<UUID, GameSession> result = gameService.getActiveGames();
+
+        assertThat(result).hasSize(1);
+        assertThat(result).containsKey(sessionId1);
+    }
+
+    @Test
+    void executeTurn_ShouldThrowGameNotFoundException_WhenSessionNotFound() {
+        UUID sessionId = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession userMove = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, UUID.randomUUID(), null, null, null);
+
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.empty());
+
+        assertThrows(GameNotFoundException.class, () -> gameService.executeTurn(sessionId, userMove, UUID.randomUUID()));
+    }
+
+    @Test
+    void executeTurn_ShouldThrowIntegrityViolationException_WhenMapInvalid() {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        // Невалидный ход: добавлено 2 крестика
+        int[][] newMapArray = new int[3][3];
+        newMapArray[0][0] = 1;
+        newMapArray[0][1] = 1;
+        GameMap newMap = new GameMap(newMapArray, 3);
+        GameSession userMove = new GameSession(sessionId, newMap, GameStatus.PLAYER_TURN, playerX, playerO, null, null);
+
+        assertThrows(IntegrityViolationException.class, () -> gameService.executeTurn(sessionId, userMove, playerX));
+    }
+
+    @Test
+    void executeTurn_ShouldMakeAiMove_WhenVsAiGame() {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null);
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        // Валидный ход: ставим CROSS в (0,0)
+        int[][] newMapArray = new int[3][3];
+        newMapArray[0][0] = 1; // CROSS
+        GameMap newMap = new GameMap(newMapArray, 3);
+        GameSession userMove = new GameSession(sessionId, newMap, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, null, null);
+
+        GameSession result = gameService.executeTurn(sessionId, userMove, playerX);
+
+        assertThat(result).isNotNull();
+        // После хода игрока X, должен сходить ИИ (O)
+        // Проверяем, что на поле есть хотя бы один ноль (ход ИИ)
+        int[][] resultMap = result.getGameMap().getMap();
+        boolean hasZero = false;
+        for (int[] row : resultMap) {
+            for (int cell : row) {
+                if (cell == CellType.ZERO.getValue()) {
+                    hasZero = true;
+                    break;
+                }
+            }
+        }
+        assertThat(hasZero).isTrue();
+        Mockito.verify(gameRepository, Mockito.times(1)).save(result);
     }
 }

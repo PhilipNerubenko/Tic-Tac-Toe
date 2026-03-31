@@ -123,4 +123,46 @@ class UserServiceTest {
 
         assertFalse(result);
     }
+
+    @Test
+    void findById_ShouldReturnUser_WhenExists() {
+        UUID userId = UUID.randomUUID();
+        User expectedUser = new User(userId, "testuser", "password", CellType.CROSS);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(expectedUser));
+
+        Optional<User> result = userService.findById(userId);
+
+        assertTrue(result.isPresent());
+        assertEquals(expectedUser, result.get());
+    }
+
+    @Test
+    void findById_ShouldReturnEmpty_WhenNotExists() {
+        UUID userId = UUID.randomUUID();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        Optional<User> result = userService.findById(userId);
+
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void existsByLogin_ShouldReturnTrue_WhenExists() {
+        String login = "testuser";
+
+        when(userRepository.existsByLogin(login)).thenReturn(true);
+
+        assertTrue(userService.existsByLogin(login));
+    }
+
+    @Test
+    void existsByLogin_ShouldReturnFalse_WhenNotExists() {
+        String login = "nonexistentuser";
+
+        when(userRepository.existsByLogin(login)).thenReturn(false);
+
+        assertFalse(userService.existsByLogin(login));
+    }
 }

@@ -8,20 +8,22 @@ import org.example.domain.model.User;
 import org.example.domain.repository.GameRepository;
 import org.example.domain.service.GameService;
 import org.example.domain.service.UserService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -42,15 +44,28 @@ class GameControllerTest {
     @MockBean
     private UserService userService;
 
+    @BeforeEach
+    void setUp() {
+        // Очищаем SecurityContext перед каждым тестом
+        SecurityContextHolder.clearContext();
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     void createGame_ShouldReturnCreatedStatus() throws Exception {
-        String credentials = Base64.getEncoder().encodeToString("testuser:testpassword".getBytes());
+        UUID creatorId = UUID.randomUUID();
         
-        when(userService.validateCredentials("testuser", "testpassword")).thenReturn(true);
+        GameSession newSession = new GameSession(new GameMap(3), creatorId, true);
+        when(gameService.createGame(3, creatorId, true)).thenReturn(newSession);
 
         mockMvc.perform(post("/game")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Basic " + credentials))
+                        .param("creatorId", creatorId.toString())
+                        .param("vsAi", "true")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists());
     }
@@ -64,9 +79,6 @@ class GameControllerTest {
         GameMap map = new GameMap(3);
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
 
-        when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
-        when(gameService.validateMapIntegrity(any(), any())).thenReturn(true);
-        when(gameService.checkGameStatus(any())).thenReturn(GameStatus.PLAYER_TURN);
         when(gameService.executeTurn(eq(sessionId), any(GameSession.class), eq(playerX))).thenAnswer(invocation -> {
             GameSession us = invocation.getArgument(1);
             // Копируем карту из us в session
@@ -81,8 +93,10 @@ class GameControllerTest {
             return session;
         });
 
-        String credentials = Base64.getEncoder().encodeToString("testuser:testpassword".getBytes());
-        when(userService.validateCredentials("testuser", "testpassword")).thenReturn(true);
+        // Устанавливаем аутентификацию в SecurityContext
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", "testpassword");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
         User user = new User(playerX, "testuser", "testpassword", CellType.CROSS);
         when(userService.findByLogin("testuser")).thenReturn(Optional.of(user));
 
@@ -96,10 +110,9 @@ class GameControllerTest {
         }
         """;
 
-        mockMvc.perform(post("/game/" + sessionId)
+        mockMvc.perform(post("/game/" + sessionId + "/move")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonPayload)
-                        .header("Authorization", "Basic " + credentials))
+                        .content(jsonPayload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PLAYER_TURN"));
     }
@@ -112,12 +125,14 @@ class GameControllerTest {
 
         GameMap map = new GameMap(3);
         GameSession existingSession = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
-        when(gameRepository.findById(sessionId)).thenReturn(Optional.of(existingSession));
 
-        when(gameService.validateMapIntegrity(any(), any())).thenReturn(false);
+        when(gameService.executeTurn(eq(sessionId), any(GameSession.class), eq(playerX)))
+                .thenThrow(new org.example.domain.exception.IntegrityViolationException());
 
-        String credentials = Base64.getEncoder().encodeToString("testuser:testpassword".getBytes());
-        when(userService.validateCredentials("testuser", "testpassword")).thenReturn(true);
+        // Устанавливаем аутентификацию в SecurityContext
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", "testpassword");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
         User user = new User(playerX, "testuser", "testpassword", CellType.CROSS);
         when(userService.findByLogin("testuser")).thenReturn(Optional.of(user));
 
@@ -131,10 +146,9 @@ class GameControllerTest {
         }
         """;
 
-        mockMvc.perform(post("/game/" + sessionId)
+        mockMvc.perform(post("/game/" + sessionId + "/move")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonPayload)
-                        .header("Authorization", "Basic " + credentials))
+                        .content(jsonPayload))
                 .andExpect(status().isBadRequest());
     }
 
@@ -146,9 +160,6 @@ class GameControllerTest {
         GameMap map = new GameMap();
         GameSession session = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
 
-        when(gameRepository.findById(id)).thenReturn(Optional.of(session));
-        when(gameService.validateMapIntegrity(any(), any())).thenReturn(true);
-        when(gameService.checkGameStatus(any())).thenReturn(GameStatus.VICTORY);
         when(gameService.executeTurn(eq(id), any(GameSession.class), eq(playerX))).thenAnswer(invocation -> {
             GameSession us = invocation.getArgument(1);
             // Обновляем карту
@@ -165,8 +176,10 @@ class GameControllerTest {
             return session;
         });
 
-        String credentials = Base64.getEncoder().encodeToString("testuser:testpassword".getBytes());
-        when(userService.validateCredentials("testuser", "testpassword")).thenReturn(true);
+        // Устанавливаем аутентификацию в SecurityContext
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", "testpassword");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
         User user = new User(playerX, "testuser", "testpassword", CellType.CROSS);
         when(userService.findByLogin("testuser")).thenReturn(Optional.of(user));
 
@@ -177,14 +190,12 @@ class GameControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/game/" + id)
+        mockMvc.perform(post("/game/" + id + "/move")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(jsonPayload)
-                .header("Authorization", "Basic " + credentials));
+                .content(jsonPayload))
+                .andExpect(status().isOk());
 
         Mockito.verify(gameService, Mockito.never()).getNextMove(any());
-
-        Mockito.verify(gameRepository, Mockito.times(1)).save(any(GameSession.class));
     }
 
     @Test
@@ -195,11 +206,14 @@ class GameControllerTest {
 
         GameMap map = new GameMap(3);
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
-        when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
 
-        // user2 аутентифицируется, но в сессии currentPlayer = playerX (не его очередь)
-        String credentials = Base64.getEncoder().encodeToString("user2:pass2".getBytes());
-        when(userService.validateCredentials("user2", "pass2")).thenReturn(true);
+        when(gameService.executeTurn(eq(sessionId), any(GameSession.class), eq(playerO)))
+                .thenThrow(new org.example.domain.exception.NotYourTurnException("Вы не можете ходить, сейчас очередь другого игрока"));
+
+        // Устанавливаем аутентификацию в SecurityContext для user2
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("user2", "pass2");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
         User user = new User(playerO, "user2", "pass2", CellType.ZERO);
         when(userService.findByLogin("user2")).thenReturn(Optional.of(user));
 
@@ -213,10 +227,9 @@ class GameControllerTest {
         }
         """;
 
-        mockMvc.perform(post("/game/" + sessionId)
+        mockMvc.perform(post("/game/" + sessionId + "/move")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonPayload)
-                        .header("Authorization", "Basic " + credentials))
+                        .content(jsonPayload))
                 .andExpect(status().isForbidden());
     }
 }

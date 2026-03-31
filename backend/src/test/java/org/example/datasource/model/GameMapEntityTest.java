@@ -24,4 +24,13 @@ class GameMapEntityTest {
         assertEquals(customSize, entity.getMap().length);
         assertEquals(0, entity.getMap()[0][0]);
     }
+
+    @Test
+    void constructorWithArray_ShouldPreserveMap() {
+        int[][] mapArray = {{1, 0}, {0, 2}};
+        GameMapEntity entity = new GameMapEntity(mapArray, 2);
+
+        assertEquals(2, entity.getSize());
+        assertArrayEquals(mapArray, entity.getMap());
+    }
 }
