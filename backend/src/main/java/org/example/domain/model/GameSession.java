@@ -209,7 +209,7 @@ public class GameSession {
     * @return {@code true}, если статус игры - {@link GameStatus#VICTORY} или {@link GameStatus#DRAW}.
     */
     public boolean isGameOver() {
-        return status == GameStatus.VICTORY || status == GameStatus.DRAW;
+        return status == GameStatus.VICTORY || status == GameStatus.DRAW || status == GameStatus.OPPONENT_LEFT;
     }
 
     /**
