@@ -4,12 +4,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
 import org.example.domain.model.User;
 import org.example.domain.service.GameService;
 import org.example.domain.service.UserService;
 import org.example.web.mapper.GameMapperDTO;
 import org.example.web.model.GameSessionDTO;
+import org.example.web.model.MoveRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -17,7 +19,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * REST-контроллер для управления игровым процессом "Крестиков-ноликов".
@@ -33,12 +37,9 @@ public class GameController {
 
     /**
      * Конструктор для инициализации контроллера.
-     * <p>
-     * Spring автоматически внедряет (Inject) необходимые зависимости
-     * для работы с бизнес-логикой и хранилищем данных.
      *
-     * @param gameService    сервис для обработки игровой логики и ходов ИИ.
-     * @param userService    сервис для работы с пользователями.
+     * @param gameService сервис для обработки игровой логики и ходов ИИ.
+     * @param userService сервис для работы с пользователями.
      */
     public GameController(GameService gameService, UserService userService) {
         this.gameService = gameService;
@@ -67,8 +68,8 @@ public class GameController {
     /**
      * Принимает ход пользователя, проверяет его и выполняет ответный ход ИИ.
      *
-     * @param id             UUID сессии из URL.
-     * @param userRequestDTO состояние поля после хода пользователя.
+     * @param id    UUID сессии из URL.
+     * @param moveRequest состояние поля после хода пользователя.
      * @return обновленное состояние сессии.
      * @throws ResponseStatusException 404 если игра не найдена, 400 если ход невалиден.
      */
@@ -79,28 +80,15 @@ public class GameController {
     @ApiResponse(responseCode = "404", description = "Сессия с таким ID не найдена")
     public ResponseEntity<GameSessionDTO> playMove(
             @PathVariable UUID id,
-            @RequestBody GameSessionDTO userRequestDTO) {
+            @RequestBody MoveRequest moveRequest) {
 
-        // 1. Получаем аутентифицированного пользователя из контекста безопасности
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Не авторизован");
-        }
+        UUID authenticatedUserId = getAuthenticatedUserId();
 
-        String login = authentication.getName(); // principal - это логин (String) из AuthFilter
-        User user = userService.findByLogin(login)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Пользователь не найден"));
-        UUID authenticatedUserId = user.id();
+        GameMap gameMap = GameMapperDTO.toGameMap(moveRequest);
+        GameSession userMove = new GameSession(gameMap, authenticatedUserId, false);
 
-        // 2. Маппим DTO из веба в чистую модель домена
-        GameSession userMove = GameMapperDTO.toDomain(userRequestDTO);
-        // Игнорируем currentPlayer из DTO - устанавливаем null, чтобы не было соблазна использовать его
-        userMove.setCurrentPlayer(null);
-
-        // 3. Вызов сервиса с проверкой авторизации
         GameSession updatedSession = gameService.executeTurn(id, userMove, authenticatedUserId);
 
-        // 4. Возвращаем результат, маппим обратно в DTO
         return ResponseEntity.ok(GameMapperDTO.toDTO(updatedSession));
     }
     
@@ -114,23 +102,12 @@ public class GameController {
             @PathVariable UUID id,
             @RequestParam UUID guestId) {
 
-        // 1. Получаем аутентифицированного пользователя из контекста безопасности
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Не авторизован");
-        }
+        UUID authenticatedUserId = getAuthenticatedUserId();
 
-        String login = authentication.getName(); // principal - это логин (String) из AuthFilter
-        User user = userService.findByLogin(login)
-                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Пользователь не найден"));
-        UUID authenticatedUserId = user.id();
-
-        // Проверяем, что пользователь пытается присоединиться как тот же пользователь, что и в параметре
         if (!authenticatedUserId.equals(guestId)) {
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Вы не можете присоединиться к игре за другого пользователя");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Вы не можете присоединиться к игре за другого пользователя");
         }
 
-        // Вызов сервиса для логики присоединения
         GameSession joinedSession = gameService.joinPlayer(id, guestId);
 
         return ResponseEntity.ok(GameMapperDTO.toDTO(joinedSession));
@@ -144,18 +121,8 @@ public class GameController {
     public ResponseEntity<GameSessionDTO> getGameById(
             @PathVariable UUID id) {
         
-        // 1. Получаем аутентифицированного пользователя из контекста безопасности
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Не авторизован");
-        }
+        UUID authenticatedUserId = getAuthenticatedUserId();
 
-        String login = authentication.getName(); // principal - это логин (String) из AuthFilter
-        User user = userService.findByLogin(login)
-                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Пользователь не найден"));
-        UUID authenticatedUserId = user.id();
-
-        // 2. Получаем сессию из сервиса с проверкой авторизации
         GameSession session = gameService.findGameForUser(id, authenticatedUserId);
         
         return ResponseEntity.ok(GameMapperDTO.toDTO(session));
@@ -164,12 +131,12 @@ public class GameController {
     @GetMapping("/active")
     @Operation(summary = "Получить активные игры", description = "Возвращает список доступных игр для присоединения")
     @ApiResponse(responseCode = "200", description = "Список активных игр")
-    public ResponseEntity<java.util.Map<UUID, GameSessionDTO>> getActiveGames() {
-        java.util.Map<UUID, GameSession> activeGames = gameService.getActiveGames();
+    public ResponseEntity<Map<UUID, GameSessionDTO>> getActiveGames() {
+        Map<UUID, GameSession> activeGames = gameService.getActiveGames();
         
-        java.util.Map<UUID, GameSessionDTO> dtoMap = activeGames.entrySet().stream()
-                .collect(java.util.stream.Collectors.toMap(
-                    java.util.Map.Entry::getKey,
+        Map<UUID, GameSessionDTO> dtoMap = activeGames.entrySet().stream()
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
                     entry -> GameMapperDTO.toDTO(entry.getValue())
                 ));
         
@@ -185,20 +152,28 @@ public class GameController {
             @PathVariable UUID id,
             @RequestParam(defaultValue = "30") long timeoutSeconds) {
         
-        // 1. Получаем аутентифицированного пользователя из контекста безопасности
+        UUID authenticatedUserId = getAuthenticatedUserId();
+
+        GameSession session = gameService.checkOpponentLeft(id, authenticatedUserId, timeoutSeconds);
+        
+        return ResponseEntity.ok(GameMapperDTO.toDTO(session));
+    }
+
+    /**
+     * Получает UUID аутентифицированного пользователя из контекста безопасности.
+     *
+     * @return UUID текущего пользователя.
+     * @throws ResponseStatusException 401 если пользователь не аутентифицирован или не найден.
+     */
+    private UUID getAuthenticatedUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getPrincipal() == null) {
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Не авторизован");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Не авторизован");
         }
 
         String login = authentication.getName();
         User user = userService.findByLogin(login)
-                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Пользователь не найден"));
-        UUID authenticatedUserId = user.id();
-
-        // 2. Проверяем, покинул ли соперник игру
-        GameSession session = gameService.checkOpponentLeft(id, authenticatedUserId, timeoutSeconds);
-        
-        return ResponseEntity.ok(GameMapperDTO.toDTO(session));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Пользователь не найден"));
+        return user.id();
     }
 }

@@ -7,6 +7,7 @@ import org.example.datasource.repository.UserRepositoryImpl;
 import org.example.domain.repository.GameRepository;
 import org.example.domain.repository.UserRepository;
 import org.example.domain.service.*;
+import org.example.web.filter.AuthFilter;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -26,11 +27,22 @@ class GameConfigTest {
     }
 
     @Test
+    void aiMoveStrategy_ShouldCreateMinimaxAiStrategy() {
+        GameConfig config = new GameConfig();
+
+        AiMoveStrategy strategy = config.aiMoveStrategy();
+
+        assertNotNull(strategy);
+        assertInstanceOf(MinimaxAiStrategy.class, strategy);
+    }
+
+    @Test
     void gameService_ShouldCreateGameServiceImpl() {
         GameConfig config = new GameConfig();
         GameRepository repo = Mockito.mock(GameRepository.class);
+        AiMoveStrategy aiStrategy = Mockito.mock(AiMoveStrategy.class);
 
-        GameService service = config.gameService(repo);
+        GameService service = config.gameService(repo, aiStrategy);
 
         assertNotNull(service);
         assertInstanceOf(GameServiceImpl.class, service);
@@ -67,5 +79,16 @@ class GameConfigTest {
 
         assertNotNull(service);
         assertInstanceOf(AuthServiceImpl.class, service);
+    }
+
+    @Test
+    void authFilter_ShouldCreateAuthFilter() {
+        GameConfig config = new GameConfig();
+        UserService userService = Mockito.mock(UserService.class);
+
+        AuthFilter filter = config.authFilter(userService);
+
+        assertNotNull(filter);
+        assertInstanceOf(AuthFilter.class, filter);
     }
 }

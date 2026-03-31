@@ -1,7 +1,7 @@
 package org.example.domain.service;
 
+import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
-import org.example.web.model.SignUpRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -28,14 +28,14 @@ public class AuthServiceImpl implements AuthService {
     /**
      * Регистрирует нового пользователя в системе.
      *
-     * @param request запрос на регистрацию с логином и паролем.
+     * @param command команда на регистрацию с логином и паролем.
      * @return {@code true}, если регистрация прошла успешно.
      * @throws IllegalArgumentException если пользователь с таким логином уже существует.
      */
     @Override
     @Transactional
-    public boolean signUp(SignUpRequest request) {
-        userService.register(request.login(), request.password());
+    public boolean signUp(RegistrationCommand command) {
+        userService.register(command.login(), command.password());
         return true;
     }
 

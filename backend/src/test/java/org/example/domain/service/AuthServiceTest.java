@@ -1,8 +1,8 @@
 package org.example.domain.service;
 
 import org.example.domain.model.CellType;
+import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
-import org.example.web.model.SignUpRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -34,13 +34,13 @@ class AuthServiceTest {
 
     @Test
     void signUp_ShouldReturnTrue_WhenRegistrationSuccessful() {
-        SignUpRequest request = new SignUpRequest("testuser", "testpassword");
+        RegistrationCommand command = new RegistrationCommand("testuser", "testpassword");
 
         when(userService.register(anyString(), anyString())).thenReturn(
                 new User(UUID.randomUUID(), "testuser", "testpassword", CellType.CROSS)
         );
 
-        boolean result = authService.signUp(request);
+        boolean result = authService.signUp(command);
 
         assertTrue(result);
         verify(userService, times(1)).register("testuser", "testpassword");
@@ -48,12 +48,12 @@ class AuthServiceTest {
 
     @Test
     void signUp_ShouldThrowException_WhenUserAlreadyExists() {
-        SignUpRequest request = new SignUpRequest("existinguser", "testpassword");
+        RegistrationCommand command = new RegistrationCommand("existinguser", "testpassword");
 
         when(userService.register(anyString(), anyString()))
                 .thenThrow(new IllegalArgumentException("User with login 'existinguser' already exists"));
 
-        assertThrows(IllegalArgumentException.class, () -> authService.signUp(request));
+        assertThrows(IllegalArgumentException.class, () -> authService.signUp(command));
 
         verify(userService, times(1)).register("existinguser", "testpassword");
     }

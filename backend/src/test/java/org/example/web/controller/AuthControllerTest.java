@@ -1,10 +1,10 @@
 package org.example.web.controller;
 
 import org.example.domain.model.CellType;
+import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
 import org.example.domain.service.AuthService;
 import org.example.domain.service.UserService;
-import org.example.web.model.SignUpRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -36,7 +36,7 @@ class AuthControllerTest {
 
     @Test
     void signUp_ShouldReturnCreated() throws Exception {
-        when(authService.signUp(any(SignUpRequest.class))).thenReturn(true);
+        when(authService.signUp(any(RegistrationCommand.class))).thenReturn(true);
 
         String jsonPayload = """
         {

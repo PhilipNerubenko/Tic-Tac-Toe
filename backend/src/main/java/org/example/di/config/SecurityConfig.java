@@ -1,6 +1,5 @@
 package org.example.di.config;
 
-import org.example.domain.service.UserService;
 import org.example.web.filter.AuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,13 +24,13 @@ public class SecurityConfig {
      * Для всех остальных endpoint'ов требуется авторизация.
      * Использует AuthFilter в качестве фильтра.
      *
-     * @param http        объект HttpSecurity для настройки безопасности.
-     * @param userService сервис для работы с пользователями.
+     * @param http       объект HttpSecurity для настройки безопасности.
+     * @param authFilter фильтр авторизации, внедрённый через DI.
      * @return настроенный SecurityFilterChain.
      * @throws Exception если возникает ошибка при настройке безопасности.
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserService userService) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthFilter authFilter) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> {})
@@ -51,7 +50,7 @@ public class SecurityConfig {
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(formLogin -> formLogin.disable())
 
-                .addFilterBefore(new AuthFilter(userService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

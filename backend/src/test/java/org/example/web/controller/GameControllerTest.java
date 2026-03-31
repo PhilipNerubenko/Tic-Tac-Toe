@@ -107,8 +107,7 @@ class GameControllerTest {
           "gameMap": {
             "map": [[1,0,0],[0,0,0],[0,0,0]],
             "size": 3
-          },
-          "status": "PLAYER_TURN"
+          }
         }
         """;
 
@@ -143,8 +142,7 @@ class GameControllerTest {
           "gameMap": {
             "map": [[1,1,1],[1,1,1],[1,1,1]],
             "size": 3
-          },
-          "status": "PLAYER_TURN"
+          }
         }
         """;
 
@@ -187,8 +185,7 @@ class GameControllerTest {
 
         String jsonPayload = """
                 {
-                    "gameMap": {"map": [[1,1,1],[0,0,0], [0,0,0]], "size": 3},
-                    "status": "PLAYER_TURN"
+                    "gameMap": {"map": [[1,1,1],[0,0,0], [0,0,0]], "size": 3}
                 }
                 """;
 
@@ -224,8 +221,7 @@ class GameControllerTest {
           "gameMap": {
             "map": [[2,0,0],[0,0,0],[0,0,0]],
             "size": 3
-          },
-          "status": "PLAYER_TURN"
+          }
         }
         """;
 

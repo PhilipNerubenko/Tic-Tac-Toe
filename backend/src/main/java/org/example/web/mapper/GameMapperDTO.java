@@ -1,11 +1,13 @@
 package org.example.web.mapper;
 
+import org.example.domain.model.CellType;
 import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
 import org.example.domain.model.GameStatus;
 import org.example.web.model.GameMapDTO;
 import org.example.web.model.GameSessionDTO;
 import org.example.web.model.GameStatusDTO;
+import org.example.web.model.MoveRequest;
 
 /**
  * Компонент-преобразователь (Mapper) для веб-уровня.
@@ -72,6 +74,18 @@ public class GameMapperDTO {
         session.setLastActiveAt(dto.getLastActiveAt());
         
         return session;
+    }
+
+    /**
+     * Преобразует MoveRequest в доменную модель GameMap.
+     * Используется для обработки хода игрока.
+     *
+     * @param request запрос на ход.
+     * @return доменная модель игрового поля.
+     */
+    public static GameMap toGameMap(MoveRequest request) {
+        if (request == null || request.gameMap() == null) return null;
+        return toDomainMap(request.gameMap());
     }
 
     private static GameMapDTO toWebMap(GameMap domainMap) {

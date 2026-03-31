@@ -4,6 +4,7 @@ import org.example.datasource.mapper.GameMapper;
 import org.example.datasource.model.GameSessionEntity;
 import org.example.domain.model.GameSession;
 import org.example.domain.repository.GameRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Optional;
@@ -50,6 +51,7 @@ public class GameRepositoryImpl implements GameRepository {
      * или пустой Optional, если игра не найдена.
      */
     @Override
+    @Transactional
     public Optional<GameSession> findById(UUID id) {
         return jpaGameRepository.findById(id)
                 .map(GameMapper::toDomain);

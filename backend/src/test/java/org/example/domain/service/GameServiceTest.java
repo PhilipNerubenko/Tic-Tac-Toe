@@ -28,11 +28,13 @@ import static org.mockito.ArgumentMatchers.any;
 class GameServiceTest {
     private GameService gameService;
     private GameRepository gameRepository;
+    private AiMoveStrategy aiMoveStrategy;
 
     @BeforeEach
     void setUp() {
         gameRepository = Mockito.mock(GameRepository.class);
-        gameService = new GameServiceImpl(gameRepository);
+        aiMoveStrategy = Mockito.mock(AiMoveStrategy.class);
+        gameService = new GameServiceImpl(gameRepository, aiMoveStrategy);
     }
 
     @Test
@@ -46,6 +48,10 @@ class GameServiceTest {
         UUID playerX = UUID.randomUUID();
         GameSession session = new GameSession(map, playerX, true); // vsAi = true, playerO = AI
 
+        // Мокаем AI стратегию - она должна вернуть выигрышный ход (0, 2)
+        Mockito.when(aiMoveStrategy.calculateMove(any(GameSession.class), Mockito.eq(CellType.ZERO)))
+                .thenReturn(new int[]{0, 2});
+
         gameService.getNextMove(session);
 
         assertThat(session.getGameMap().getMap()[0][2]).isEqualTo(CellType.ZERO.getValue());
@@ -54,7 +60,7 @@ class GameServiceTest {
     }
 
     @Test
-    void getNextMove_ShouldDoNothing_WhenMapIsFull() {
+    void getNextMove_ShouldDoNothing_WhenNoMoveFound() {
         int[][] fullBoard = {
                 {1, 2, 1},
                 {1, 2, 2},
@@ -63,6 +69,10 @@ class GameServiceTest {
         GameMap map = new GameMap(fullBoard, 3);
         UUID playerX = UUID.randomUUID();
         GameSession session = new GameSession(map, playerX, true);
+
+        // Мокаем AI стратегию - нет доступных ходов
+        Mockito.when(aiMoveStrategy.calculateMove(any(GameSession.class), Mockito.eq(CellType.ZERO)))
+                .thenReturn(new int[]{-1, -1});
 
         int[] result = gameService.getNextMove(session);
 
@@ -83,6 +93,10 @@ class GameServiceTest {
         UUID playerX = UUID.randomUUID();
         GameSession session = new GameSession(map, playerX, true);
 
+        // Мокаем AI стратегию - последний доступный ход (2, 0)
+        Mockito.when(aiMoveStrategy.calculateMove(any(GameSession.class), Mockito.eq(CellType.ZERO)))
+                .thenReturn(new int[]{2, 0});
+
         int[] result = gameService.getNextMove(session);
 
         assertArrayEquals(new int[]{2, 0}, result);
@@ -93,15 +107,20 @@ class GameServiceTest {
     }
 
     @Test
-    void getNextMove_ShouldUseEvaluateBoard_WhenManyMovesLeft() {
+    void getNextMove_ShouldUseAiStrategy_WhenManyMovesLeft() {
         int[][] emptyBoard = new int[3][3];
         GameMap map = new GameMap(emptyBoard, 3);
         UUID playerX = UUID.randomUUID();
         GameSession session = new GameSession(map, playerX, true);
 
+        // Мокаем AI стратегию
+        Mockito.when(aiMoveStrategy.calculateMove(any(GameSession.class), Mockito.eq(CellType.ZERO)))
+                .thenReturn(new int[]{1, 1});
+
         int[] move = gameService.getNextMove(session);
 
         assertThat(move).isNotNull();
+        assertArrayEquals(new int[]{1, 1}, move);
     }
 
     @Test
@@ -414,10 +433,13 @@ class GameServiceTest {
         GameMap newMap = new GameMap(newMapArray, 3);
         GameSession userMove = new GameSession(sessionId, newMap, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, null, null);
 
+        // Мокаем AI стратегию - она должна вернуть ход (1,1)
+        Mockito.when(aiMoveStrategy.calculateMove(any(GameSession.class), Mockito.eq(CellType.ZERO)))
+                .thenReturn(new int[]{1, 1});
+
         GameSession result = gameService.executeTurn(sessionId, userMove, playerX);
 
         assertThat(result).isNotNull();
-        // После хода игрока X, должен сходить ИИ (O)
         // Проверяем, что на поле есть хотя бы один ноль (ход ИИ)
         int[][] resultMap = result.getGameMap().getMap();
         boolean hasZero = false;

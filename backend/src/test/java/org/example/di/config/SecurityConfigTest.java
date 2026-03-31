@@ -1,6 +1,5 @@
 package org.example.di.config;
 
-import org.example.domain.service.UserService;
 import org.example.web.filter.AuthFilter;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -17,7 +16,7 @@ class SecurityConfigTest {
     @Test
     void securityFilterChain_ShouldConfigureCorrectly() throws Exception {
         SecurityConfig config = new SecurityConfig();
-        UserService userService = Mockito.mock(UserService.class);
+        AuthFilter authFilter = Mockito.mock(AuthFilter.class);
         HttpSecurity http = mock(HttpSecurity.class);
         when(http.csrf(any())).thenReturn(http);
         when(http.cors(any())).thenReturn(http);
@@ -27,7 +26,7 @@ class SecurityConfigTest {
         when(http.addFilterBefore(any(AuthFilter.class), eq(UsernamePasswordAuthenticationFilter.class))).thenReturn(http);
         when(http.build()).thenReturn(mock(DefaultSecurityFilterChain.class));
 
-        var result = config.securityFilterChain(http, userService);
+        var result = config.securityFilterChain(http, authFilter);
 
         assertNotNull(result);
         verify(http).csrf(any());

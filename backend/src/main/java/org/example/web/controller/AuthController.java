@@ -3,6 +3,7 @@ package org.example.web.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
 import org.example.domain.service.AuthService;
 import org.example.domain.service.UserService;
@@ -52,7 +53,8 @@ public class AuthController {
     @ApiResponse(responseCode = "201", description = "Пользователь успешно зарегистрирован")
     @ApiResponse(responseCode = "400", description = "Пользователь с таким логином уже существует")
     public ResponseEntity<Map<String, Boolean>> signUp(@RequestBody SignUpRequest request) {
-        boolean result = authService.signUp(request);
+        RegistrationCommand command = new RegistrationCommand(request.login(), request.password());
+        boolean result = authService.signUp(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", result));
     }
 
