@@ -17,21 +17,35 @@ export function UserProfile({ onClose }: UserProfileProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
+    if (!user?.userId) {
+      setUserInfo(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     const loadUserInfo = async () => {
-      if (user?.userId) {
-        setLoading(true);
-        setError(null);
-        const info = await fetchUserById(user.userId);
-        if (info) {
-          setUserInfo(info);
-        } else {
-          setError('Failed to load user information');
-        }
-        setLoading(false);
+      setLoading(true);
+      setError(null);
+      const info = await fetchUserById(user.userId);
+      if (cancelled) return;
+
+      if (info) {
+        setUserInfo(info);
+      } else {
+        setUserInfo(null);
+        setError('Failed to load user information');
       }
+
+      setLoading(false);
     };
 
-    loadUserInfo();
+    void loadUserInfo();
+    return () => {
+      cancelled = true;
+    };
   }, [user?.userId, fetchUserById]);
 
   return (
