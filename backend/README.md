@@ -1,24 +1,27 @@
 # Tic-Tac-Toe Backend
 
-A Spring Boot 3.2.2 REST API backend for the Tic-Tac-Toe game with layered architecture and interactive API documentation.
+A Spring Boot 3.3.4 REST API backend for the Tic-Tac-Toe game with layered architecture, JWT authentication, and PostgreSQL persistence.
 
 ## 🚀 Features
 
-- **Spring Boot 3.2.2** - Modern Java framework with built-in best practices
-- **REST API** - Clean endpoints for game operations
-- **Swagger UI** - Interactive API documentation at `/swagger-ui.html`
-- **Layered Architecture** - Clean separation (Web → Domain → Datasource layers)
-- **Dependency Injection** - Full Spring DI container management
-- **Game Sessions** - Support for multiple concurrent games
-- **AI Opponent** - Built-in AI logic for O player moves
+- **Spring Boot 3.3.4** — Modern Java framework with built-in best practices
+- **Spring Security + JWT** — Token-based authentication and authorization
+- **PostgreSQL** — Reliable data persistence for users and game sessions
+- **Spring Data JPA** — Clean data access abstraction with Hibernate
+- **Swagger UI** — Interactive API documentation at `/swagger-ui.html`
+- **Layered Architecture** — Clean separation (Web → Domain → Datasource layers)
+- **Dependency Injection** — Full Spring DI container management
+- **Game Sessions** — Support for multiple concurrent games per user
+- **AI Opponent** — Built-in AI logic for O player moves
+- **User Management** — Registration, login, and profile management
 
 ## 📋 Getting Started
 
 ### Prerequisites
 
 - Java 18+
+- PostgreSQL 15+ (or use Docker Compose)
 - Gradle (wrapper included)
-- Frontend running on `http://localhost:5173` (for development)
 
 ### Installation
 
@@ -26,7 +29,38 @@ A Spring Boot 3.2.2 REST API backend for the Tic-Tac-Toe game with layered archi
 cd backend
 ```
 
+### Environment Variables
+
+The backend requires the following environment variables:
+
+| Variable | Description | Example |
+| --- | --- | --- |
+| `SPRING_DATASOURCE_URL` | PostgreSQL connection URL | `jdbc:postgresql://localhost:5432/game_sessions_storage` |
+| `SPRING_DATASOURCE_USERNAME` | Database username | `postgres` |
+| `SPRING_DATASOURCE_PASSWORD` | Database password | `postgres` |
+
 ### Development
+
+#### Start PostgreSQL
+
+```bash
+docker run -d --name postgres-db \
+  -e POSTGRES_DB=game_sessions_storage \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  postgres:15-alpine
+```
+
+#### Set Environment Variables
+
+```bash
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/game_sessions_storage
+export SPRING_DATASOURCE_USERNAME=postgres
+export SPRING_DATASOURCE_PASSWORD=postgres
+```
+
+#### Run the Application
 
 ```bash
 ./gradlew bootRun
@@ -66,38 +100,70 @@ src/
 │   ├── Main.java               # Application entry point
 │   ├── web/                    # REST Controller layer
 │   │   ├── controller/         # @RestController endpoints
+│   │   │   ├── AuthController  # /auth/signup, /auth/login
+│   │   │   ├── GameController  # /game endpoints
+│   │   │   └── GlobalExceptionHandler
+│   │   ├── filter/             # AuthFilter (JWT validation)
 │   │   ├── mapper/             # DTO ↔ Entity mappers
 │   │   └── model/              # Request/Response DTOs
 │   ├── domain/                 # Business logic layer
-│   │   ├── model/              # Domain entities (Game, GameMap)
+│   │   ├── model/              # Domain entities (Game, GameMap, User)
 │   │   ├── repository/         # Repository interfaces
-│   │   └── service/            # Business logic (GameService)
+│   │   ├── service/            # Business logic
+│   │   │   ├── AuthService     # JWT token management
+│   │   │   ├── GameService     # Game rules and AI logic
+│   │   │   └── UserService     # User management
+│   │   └── exception/          # Custom exceptions
 │   ├── datasource/             # Data access layer
 │   │   ├── mapper/             # Custom entity mappers
-│   │   ├── model/              # JPA entities
-│   │   ├── repository/         # Spring Data implementations
-│   │   └── storage/            # In-memory storage
+│   │   ├── model/              # JPA entities (UserEntity, GameSessionEntity, etc.)
+│   │   └── repository/         # Spring Data JPA implementations
 │   └── di/config/              # Spring @Configuration classes
+│       ├── GameConfig          # Game beans configuration
+│       └── SecurityConfig      # Spring Security + JWT setup
 ├── resources/
-│   └── application.properties  # Server and logging config
+│   └── application.properties  # Server and database config
 └── test/java/org/example/      # Unit & integration tests
 ```
 
 ## 🎮 How It Works
 
+### Authentication Flow
+
+1. **Register**: `POST /auth/signup` creates a new user account
+2. **Login**: `POST /auth/login` returns a JWT token
+3. **Authenticate**: Include `Authorization: Bearer <token>` header in subsequent requests
+
 ### Game Flow
 
-1. **Create Game**: `POST /game?size=3` creates a new game session
+1. **Create Game**: `POST /game?size=3` creates a new game session (requires auth)
 2. **Player Move**: `POST /game/{id}` with game state containing your move (X)
 3. **AI Response**: Backend processes the move and calculates AI move (O)
 4. **Game Status**: Response includes updated board and game state (PLAYING/WIN/DRAW)
 
 ### API Endpoints
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `POST` | `/game?size=3` | Create new game (size parameter: 3 or higher) |
-| `POST` | `/game/{id}` | Submit move and get AI response |
+#### Authentication
+
+| Method | Endpoint | Description | Auth Required |
+| --- | --- | --- | --- |
+| `POST` | `/auth/signup` | Register new user | No |
+| `POST` | `/auth/login` | Login and get JWT token | No |
+
+#### User
+
+| Method | Endpoint | Description | Auth Required |
+| --- | --- | --- | --- |
+| `GET` | `/user/profile` | Get current user profile | Yes |
+
+#### Game
+
+| Method | Endpoint | Description | Auth Required |
+| --- | --- | --- | --- |
+| `POST` | `/game?size=3` | Create new game (size parameter: 3 or higher) | Yes |
+| `POST` | `/game/{id}` | Submit move and get AI response | Yes |
+| `GET` | `/game/{id}` | Get game status | Yes |
+| `GET` | `/game` | List all user's games | Yes |
 
 ### Response Format
 
@@ -125,12 +191,15 @@ Key settings:
 # Server port
 server.port=8080
 
-# Context path
-server.servlet.context-path=/
+# Database connection (via environment variables)
+spring.datasource.url=${SPRING_DATASOURCE_URL}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
 
-# Logging level
-logging.level.org.example=DEBUG
-logging.level.org.springframework=INFO
+# Hibernate settings
+spring.jpa.hibernate.ddl-auto=create-drop
+spring.jpa.show-sql=true
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
 ```
 
 ### Changing Port
@@ -176,7 +245,11 @@ docker build -t tic-tac-toe-backend:latest .
 ### Run Container
 
 ```bash
-docker run -p 8080:8080 tic-tac-toe-backend:latest
+docker run -p 8080:8080 \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/game_sessions_storage \
+  -e SPRING_DATASOURCE_USERNAME=postgres \
+  -e SPRING_DATASOURCE_PASSWORD=postgres \
+  tic-tac-toe-backend:latest
 ```
 
 ### Using Docker Compose
@@ -184,7 +257,7 @@ docker run -p 8080:8080 tic-tac-toe-backend:latest
 From project root:
 
 ```bash
-docker-compose up backend
+docker-compose up backend-api
 ```
 
 The frontend will automatically connect to the API on `http://localhost:8080`
@@ -202,7 +275,7 @@ The frontend will automatically connect to the API on `http://localhost:8080`
 ./gradlew test --info
 ```
 
-Tests follow the same package structure as main code in `src/test/java/`
+Tests use H2 in-memory database for isolation.
 
 ## 🔍 Troubleshooting
 
@@ -219,6 +292,12 @@ Tests follow the same package structure as main code in `src/test/java/`
 ### Port 8080 already in use
 
 Change the port in `application.properties` or use the command line option shown above.
+
+### Database connection error
+
+- Ensure PostgreSQL is running
+- Check environment variables are set correctly
+- Verify connection URL format: `jdbc:postgresql://host:port/dbname`
 
 ### API Documentation not loading
 
@@ -239,7 +318,9 @@ Check logs for startup errors:
 Verify backend is running at `http://localhost:8080`:
 
 ```bash
-curl -X POST http://localhost:8080/game?size=3
+curl -X POST http://localhost:8080/auth/signup \
+     -H "Content-Type: application/json" \
+     -d '{"username":"test","password":"test"}'
 ```
 
 Check CORS and network configurations.
@@ -248,18 +329,20 @@ Check CORS and network configurations.
 
 ### Layered Architecture Pattern
 
-- **web**: HTTP requests/responses, DTOs, validation
-- **domain**: Pure business logic, game rules, AI strategy
-- **datasource**: Data persistence abstraction
-- **di**: Spring bean configuration
+- **web**: HTTP requests/responses, DTOs, validation, JWT filter
+- **domain**: Pure business logic, game rules, AI strategy, auth service
+- **datasource**: Data persistence via JPA/Hibernate + PostgreSQL
+- **di**: Spring bean configuration, Security configuration
 
 ### Adding Features
 
 1. Create data model in `domain.model`
-2. Define service interface in `domain.repository`
+2. Define repository interface in `domain.repository`
 3. Implement logic in `domain.service`
 4. Add HTTP endpoint in `web.controller`
-5. Write tests in `src/test/`
+5. Create JPA entity in `datasource.model`
+6. Implement repository in `datasource.repository`
+7. Write tests in `src/test/`
 
 ### Code Quality
 
@@ -267,3 +350,4 @@ Check CORS and network configurations.
 - Use dependency injection
 - Keep single responsibility principle
 - Add JavaDoc for public methods
+- Write unit tests for services and controllers
