@@ -61,13 +61,15 @@ public class GameRepositoryImpl implements GameRepository {
     /**
      * Находит игровую сессию с пессимистичной блокировкой для записи.
      * Используется перед операциями изменения (executeTurn, joinPlayer).
+     * <p>
+     * ВАЖНО: этот метод должен вызываться внутри транзакции сервиса,
+     * чтобы блокировка сохранялась до завершения операции сохранения.
      *
      * @param id UUID сессии.
      * @return {@link Optional}, содержащий доменную модель игры,
      * или пустой Optional, если игра не найдена.
      */
     @Override
-    @Transactional
     public Optional<GameSession> findByIdForUpdate(UUID id) {
         return jpaGameRepository.findById(id)
                 .map(GameMapper::toDomain);

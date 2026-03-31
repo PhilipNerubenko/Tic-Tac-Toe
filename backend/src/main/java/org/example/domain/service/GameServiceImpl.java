@@ -9,6 +9,7 @@ import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
 import org.example.domain.model.GameStatus;
 import org.example.domain.repository.GameRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -95,6 +96,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    @Transactional
     public GameSession executeTurn(UUID id, GameSession userMove, UUID authenticatedUserId) {
         GameSession originalSession = repository.findByIdForUpdate(id)
                 .orElseThrow(() -> new GameNotFoundException(id));
@@ -129,6 +131,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    @Transactional
     public GameSession joinPlayer(UUID sessionId, UUID guestId) {
         GameSession session = repository.findByIdForUpdate(sessionId)
                 .orElseThrow(() -> new GameNotFoundException(sessionId));
@@ -181,6 +184,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    @Transactional
     public GameSession checkOpponentLeft(UUID gameId, UUID userId, long timeoutSeconds) {
         GameSession session = repository.findByIdForUpdate(gameId)
                 .orElseThrow(() -> new GameNotFoundException(gameId));
