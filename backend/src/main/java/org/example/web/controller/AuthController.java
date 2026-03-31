@@ -3,6 +3,7 @@ package org.example.web.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.domain.exception.DuplicateUserException;
 import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
 import org.example.domain.service.AuthService;
@@ -51,15 +52,18 @@ public class AuthController {
     @PostMapping("/signup")
     @Operation(summary = "Регистрация пользователя", description = "Создает новую учетную запись пользователя")
     @ApiResponse(responseCode = "201", description = "Пользователь успешно зарегистрирован")
-    @ApiResponse(responseCode = "400", description = "Пользователь с таким логином уже существует")
+    @ApiResponse(responseCode = "409", description = "Логин уже занят")
     public ResponseEntity<Map<String, Object>> signUp(@RequestBody SignUpRequest request) {
         try {
             RegistrationCommand command = new RegistrationCommand(request.login(), request.password());
             boolean result = authService.signUp(command);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", result));
+        } catch (DuplicateUserException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Login already in use"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", "Invalid request"));
         }
     }
 

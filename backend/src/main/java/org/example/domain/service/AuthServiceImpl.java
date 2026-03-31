@@ -1,5 +1,6 @@
 package org.example.domain.service;
 
+import org.example.domain.exception.DuplicateUserException;
 import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +31,7 @@ public class AuthServiceImpl implements AuthService {
      *
      * @param command команда на регистрацию с логином и паролем.
      * @return {@code true}, если регистрация прошла успешно.
-     * @throws IllegalArgumentException если пользователь с таким логином уже существует.
+     * @throws DuplicateUserException если пользователь с таким логином уже существует.
      */
     @Override
     @Transactional

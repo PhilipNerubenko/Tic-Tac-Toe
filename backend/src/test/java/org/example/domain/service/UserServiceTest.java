@@ -1,5 +1,6 @@
 package org.example.domain.service;
 
+import org.example.domain.exception.DuplicateUserException;
 import org.example.domain.model.CellType;
 import org.example.domain.model.User;
 import org.example.domain.repository.UserRepository;
@@ -64,7 +65,7 @@ class UserServiceTest {
 
         when(userRepository.existsByLogin(login)).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> userService.register(login, password));
+        assertThrows(DuplicateUserException.class, () -> userService.register(login, password));
 
         verify(userRepository, never()).save(any(User.class));
     }

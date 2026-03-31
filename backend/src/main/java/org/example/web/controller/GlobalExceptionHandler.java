@@ -1,5 +1,6 @@
 package org.example.web.controller;
 
+import org.example.domain.exception.DuplicateUserException;
 import org.example.domain.exception.GameDomainException;
 import org.example.domain.exception.GameNotFoundException;
 import org.example.domain.exception.IntegrityViolationException;
@@ -45,6 +46,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotGameParticipantException.class)
     public ResponseEntity<Object> handleNotGameParticipant(NotGameParticipantException ex) {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateUserException.class)
+    public ResponseEntity<Object> handleDuplicateUser(DuplicateUserException ex) {
+        return buildResponse(HttpStatus.CONFLICT, "Login already in use");
     }
 
     @ExceptionHandler(InvalidMoveException.class)

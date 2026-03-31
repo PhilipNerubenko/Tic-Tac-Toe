@@ -1,5 +1,6 @@
 package org.example.domain.service;
 
+import org.example.domain.exception.DuplicateUserException;
 import org.example.domain.model.CellType;
 import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
@@ -51,9 +52,9 @@ class AuthServiceTest {
         RegistrationCommand command = new RegistrationCommand("existinguser", "testpassword");
 
         when(userService.register(anyString(), anyString()))
-                .thenThrow(new IllegalArgumentException("User with login 'existinguser' already exists"));
+                .thenThrow(new DuplicateUserException("Login already in use"));
 
-        assertThrows(IllegalArgumentException.class, () -> authService.signUp(command));
+        assertThrows(DuplicateUserException.class, () -> authService.signUp(command));
 
         verify(userService, times(1)).register("existinguser", "testpassword");
     }

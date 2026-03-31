@@ -68,7 +68,7 @@ class AuthIntegrationTest {
     }
 
     @Test
-    void signUp_ShouldReturnBadRequest_WhenUserAlreadyExists() throws Exception {
+    void signUp_ShouldReturnConflict_WhenUserAlreadyExists() throws Exception {
         String signUpJson = """
         {
           "login": "duplicateuser",
@@ -82,10 +82,11 @@ class AuthIntegrationTest {
                         .content(signUpJson))
                 .andExpect(status().isCreated());
 
-        // Повторная регистрация с тем же логином — 400 Bad Request
+        // Повторная регистрация с тем же логином — 409 Conflict
         mockMvc.perform(post("/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(signUpJson))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("Login already in use"));
     }
 }

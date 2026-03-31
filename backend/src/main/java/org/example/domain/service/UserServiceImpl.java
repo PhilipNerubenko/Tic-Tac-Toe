@@ -1,5 +1,6 @@
 package org.example.domain.service;
 
+import org.example.domain.exception.DuplicateUserException;
 import org.example.domain.model.CellType;
 import org.example.domain.model.User;
 import org.example.domain.repository.UserRepository;
@@ -39,13 +40,13 @@ public class UserServiceImpl implements UserService {
      * @param login    уникальное имя пользователя.
      * @param password пароль пользователя.
      * @return созданный пользователь.
-     * @throws IllegalArgumentException если пользователь с таким логином уже существует.
+     * @throws DuplicateUserException если пользователь с таким логином уже существует.
      */
     @Override
     @Transactional
     public User register(String login, String password) {
         if (userRepository.existsByLogin(login)) {
-            throw new IllegalArgumentException("User with login '" + login + "' already exists");
+            throw new DuplicateUserException("Login already in use");
         }
 
         User user = new User(UUID.randomUUID(), login, passwordEncoder.encode(password), CellType.CROSS);
