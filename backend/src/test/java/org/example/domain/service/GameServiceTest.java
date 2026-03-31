@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -430,5 +431,135 @@ class GameServiceTest {
         }
         assertThat(hasZero).isTrue();
         Mockito.verify(gameRepository, Mockito.times(1)).save(result);
+    }
+
+    @Test
+    void findById_ShouldReturnSession_WhenExists() {
+        UUID sessionId = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(map, UUID.randomUUID(), true);
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        Optional<GameSession> result = gameService.findById(sessionId);
+
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(session);
+    }
+
+    @Test
+    void findById_ShouldReturnEmpty_WhenNotExists() {
+        UUID sessionId = UUID.randomUUID();
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.empty());
+
+        Optional<GameSession> result = gameService.findById(sessionId);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void findGameForUser_ShouldReturnSession_WhenUserIsPlayer() {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null);
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        GameSession result = gameService.findGameForUser(sessionId, playerX);
+
+        assertThat(result).isEqualTo(session);
+    }
+
+    @Test
+    void findGameForUser_ShouldThrowException_WhenUserNotPlayer() {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        UUID otherUser = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null);
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        assertThrows(GameDomainException.class, () -> gameService.findGameForUser(sessionId, otherUser));
+    }
+
+    @Test
+    void checkOpponentLeft_ShouldNotChange_WhenGameNotOverAndTimeNotExpired() {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, UUID.randomUUID(), playerX, null);
+        session.setLastActiveAt(Instant.now());
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        GameSession result = gameService.checkOpponentLeft(sessionId, playerX, 30);
+
+        assertThat(result.getStatus()).isEqualTo(GameStatus.PLAYER_TURN);
+        Mockito.verify(gameRepository, Mockito.never()).save(any());
+    }
+
+    @Test
+    void checkOpponentLeft_ShouldSetOpponentLeft_WhenTimeExpired() {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
+        session.setLastActiveAt(Instant.now().minusSeconds(60));
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        GameSession result = gameService.checkOpponentLeft(sessionId, playerX, 30);
+
+        assertThat(result.getStatus()).isEqualTo(GameStatus.OPPONENT_LEFT);
+        assertThat(result.getWinner()).isEqualTo(playerO);
+        Mockito.verify(gameRepository, Mockito.times(1)).save(session);
+    }
+
+    @Test
+    void checkOpponentLeft_ShouldNotSetWinner_WhenWinnerIsAI() {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null);
+        session.setLastActiveAt(Instant.now().minusSeconds(60));
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        GameSession result = gameService.checkOpponentLeft(sessionId, playerX, 30);
+
+        assertThat(result.getStatus()).isEqualTo(GameStatus.OPPONENT_LEFT);
+        assertThat(result.getWinner()).isNull();
+    }
+
+    @Test
+    void checkOpponentLeft_ShouldNotChange_WhenGameAlreadyOver() {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.VICTORY, playerX, GameSession.AI_PLAYER_ID, null, playerX);
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        GameSession result = gameService.checkOpponentLeft(sessionId, playerX, 30);
+
+        assertThat(result.getStatus()).isEqualTo(GameStatus.VICTORY);
+        Mockito.verify(gameRepository, Mockito.never()).save(any());
+    }
+
+    @Test
+    void checkOpponentLeft_ShouldThrowException_WhenUserNotPlayer() {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        UUID otherUser = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null);
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
+
+        assertThrows(GameDomainException.class, () -> gameService.checkOpponentLeft(sessionId, otherUser, 30));
+    }
+
+    @Test
+    void checkOpponentLeft_ShouldThrowException_WhenSessionNotFound() {
+        UUID sessionId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.empty());
+
+        assertThrows(GameNotFoundException.class, () -> gameService.checkOpponentLeft(sessionId, userId, 30));
     }
 }

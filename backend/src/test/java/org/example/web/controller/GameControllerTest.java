@@ -20,12 +20,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -231,5 +233,81 @@ class GameControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonPayload))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getGameById_ShouldReturnGame() throws Exception {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null);
+
+        when(gameService.findGameForUser(sessionId, playerX)).thenReturn(session);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", "testpassword");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        User user = new User(playerX, "testuser", "testpassword", CellType.CROSS);
+        when(userService.findByLogin("testuser")).thenReturn(Optional.of(user));
+
+        mockMvc.perform(get("/game/" + sessionId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(sessionId.toString()));
+    }
+
+    @Test
+    void joinGame_ShouldJoinPlayer() throws Exception {
+        UUID sessionId = UUID.randomUUID();
+        UUID creatorId = UUID.randomUUID();
+        UUID guestId = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.WAITING_FOR_PLAYERS, creatorId, null, creatorId, null);
+
+        when(gameService.joinPlayer(sessionId, guestId)).thenReturn(session);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", "testpassword");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        User user = new User(guestId, "testuser", "testpassword", CellType.ZERO);
+        when(userService.findByLogin("testuser")).thenReturn(Optional.of(user));
+
+        mockMvc.perform(post("/game/" + sessionId + "/join")
+                        .param("guestId", guestId.toString()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getActiveGames_ShouldReturnGames() throws Exception {
+        UUID sessionId = UUID.randomUUID();
+        UUID creatorId = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.WAITING_FOR_PLAYERS, creatorId, null, creatorId, null);
+
+        Map<UUID, GameSession> activeGames = Map.of(sessionId, session);
+        when(gameService.getActiveGames()).thenReturn(activeGames);
+
+        mockMvc.perform(get("/game/active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$." + sessionId).exists());
+    }
+
+    @Test
+    void checkOpponentLeft_ShouldReturnUpdatedGame() throws Exception {
+        UUID sessionId = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, UUID.randomUUID(), playerX, null);
+
+        when(gameService.checkOpponentLeft(sessionId, playerX, 30)).thenReturn(session);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", "testpassword");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        User user = new User(playerX, "testuser", "testpassword", CellType.CROSS);
+        when(userService.findByLogin("testuser")).thenReturn(Optional.of(user));
+
+        mockMvc.perform(post("/game/" + sessionId + "/check-opponent-left")
+                        .param("timeoutSeconds", "30"))
+                .andExpect(status().isOk());
     }
 }

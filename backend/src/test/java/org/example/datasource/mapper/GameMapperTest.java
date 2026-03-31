@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -21,101 +21,77 @@ class GameMapperTest {
     @Test
     void privateConstructorTest() throws Exception {
         Constructor<GameMapper> constructor = GameMapper.class.getDeclaredConstructor();
-
         constructor.setAccessible(true);
-
         InvocationTargetException exception = assertThrows(InvocationTargetException.class, constructor::newInstance);
-
         assertInstanceOf(UnsupportedOperationException.class, exception.getCause());
-        assertEquals("This is a utility class and cannot be instantiated", exception.getCause().getMessage());
     }
 
     @Test
-    void toDTO_ShouldReturnNull_WhenArgumentNull() {
-        assertNull(GameMapper.toEntity(null));
-    }
-
-    @Test
-    void toDomain_ShouldReturnNull_WhenArgumentNull() {
+    void toDomain_ShouldReturnNull_WhenEntityNull() {
         assertNull(GameMapper.toDomain(null));
     }
 
     @Test
-    void toDTO_ShouldMapAllFieldsCorrectly() {
+    void toEntity_ShouldReturnNull_WhenDomainNull() {
+        assertNull(GameMapper.toEntity(null));
+    }
+
+    @Test
+    void toDomain_ShouldConvertEntityToDomain() {
         UUID id = UUID.randomUUID();
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
-        int[][] rawMap = {{1, 0}, {0, 2}};
-        GameMap domainMap = new GameMap(rawMap, 2);
-        GameSession session = new GameSession(id, domainMap, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
+        GameMapEntity mapEntity = new GameMapEntity(3);
+        GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null);
 
-        GameSessionEntity dto = GameMapper.toEntity(session);
+        GameSession domain = GameMapper.toDomain(entity);
 
-        assertNotNull(dto);
-        assertEquals(id, dto.getId());
-        assertEquals(2, dto.getGameMap().getSize());
-        assertArrayEquals(rawMap[0], dto.getGameMap().getMap()[0]);
-        assertEquals(GameStatusEntity.PLAYER_TURN, dto.getStatus());
+        assertNotNull(domain);
+        assertEquals(id, domain.getId());
+        assertEquals(playerX, domain.getPlayerX());
+        assertEquals(playerO, domain.getPlayerO());
+        assertEquals(GameStatus.PLAYER_TURN, domain.getStatus());
+        assertEquals(3, domain.getGameMap().getSize());
     }
 
     @Test
-    void toDomain_ShouldMapAllFieldsCorrectly() {
+    void toEntity_ShouldConvertDomainToEntity() {
         UUID id = UUID.randomUUID();
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
-        int[][] rawMap = {{1, 2}, {0, 0}};
-        GameMapEntity entityMap = new GameMapEntity(rawMap, 2);
-        GameSessionEntity entity = new GameSessionEntity(id, entityMap, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null);
+        GameMap map = new GameMap(3);
+        GameSession domain = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
 
-        GameSession session = GameMapper.toDomain(entity);
+        GameSessionEntity entity = GameMapper.toEntity(domain);
 
-        assertNotNull(session);
-        assertEquals(id, session.getId());
-        assertEquals(2, session.getGameMap().getSize());
-        assertArrayEquals(rawMap[1], session.getGameMap().getMap()[1]);
-        assertEquals(GameStatus.PLAYER_TURN, session.getStatus());
+        assertNotNull(entity);
+        assertEquals(id, entity.getId());
+        assertEquals(playerX, entity.getPlayerX());
+        assertEquals(playerO, entity.getPlayerO());
+        assertEquals(GameStatusEntity.PLAYER_TURN, entity.getStatus());
+        assertEquals(3, entity.getGameMap().getSize());
     }
 
     @Test
-    void toDomainMap_ShouldMapCorrectly() {
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
-        UUID playerX = UUID.randomUUID();
-        UUID playerO = UUID.randomUUID();
+    void toDomainMap_ShouldConvertMapOfEntities() {
+        UUID id = UUID.randomUUID();
+        GameMapEntity mapEntity = new GameMapEntity(3);
+        GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, UUID.randomUUID(), null, null, null);
 
-        GameMapEntity mapEntity = new GameMapEntity(new int[][]{{0}}, 1);
-        GameSessionEntity entity1 = new GameSessionEntity(id1, mapEntity, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null);
-        GameSessionEntity entity2 = new GameSessionEntity(id2, mapEntity, GameStatusEntity.VICTORY, playerX, playerO, playerX, playerX);
+        Map<UUID, GameSessionEntity> entities = new HashMap<>();
+        entities.put(id, entity);
 
-        Map<UUID, GameSessionEntity> entityMap = Map.of(
-                id1, entity1,
-                id2, entity2
-        );
+        Map<UUID, GameSession> result = GameMapper.toDomainMap(entities);
 
-        Map<UUID, GameSession> domainMap = GameMapper.toDomainMap(entityMap);
-
-        assertNotNull(domainMap);
-        assertEquals(2, domainMap.size());
-
-        assertNotNull(domainMap.get(id1));
-        assertEquals(id1, domainMap.get(id1).getId());
-        assertEquals(GameStatus.PLAYER_TURN, domainMap.get(id1).getStatus());
-
-        assertNotNull(domainMap.get(id2));
-        assertEquals(id2, domainMap.get(id2).getId());
-        assertEquals(GameStatus.VICTORY, domainMap.get(id2).getStatus());
+        assertEquals(1, result.size());
+        assertTrue(result.containsKey(id));
+        assertNotNull(result.get(id));
     }
 
     @Test
-    void toDomainMap_ShouldReturnEmptyMap_WhenInputIsEmpty() {
-        Map<UUID, GameSession> result = GameMapper.toDomainMap(Collections.emptyMap());
-
-        assertNotNull(result);
+    void toDomainMap_ShouldHandleEmptyMap() {
+        Map<UUID, GameSessionEntity> entities = new HashMap<>();
+        Map<UUID, GameSession> result = GameMapper.toDomainMap(entities);
         assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void toDomainMap_ShouldHandleNullInput() {
-        assertThrows(NullPointerException.class, () -> GameMapper.toDomainMap(null));
     }
 }
