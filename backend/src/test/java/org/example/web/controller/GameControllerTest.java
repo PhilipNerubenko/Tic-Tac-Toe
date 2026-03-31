@@ -77,9 +77,10 @@ class GameControllerTest {
         UUID sessionId = UUID.randomUUID();
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
+        java.time.Instant lastActiveAt = java.time.Instant.now();
 
         GameMap map = new GameMap(3);
-        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         when(gameService.executeTurn(eq(sessionId), any(GameSession.class), eq(playerX))).thenAnswer(invocation -> {
             GameSession us = invocation.getArgument(1);
@@ -123,9 +124,10 @@ class GameControllerTest {
         UUID sessionId = UUID.randomUUID();
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
+        java.time.Instant lastActiveAt = java.time.Instant.now();
 
         GameMap map = new GameMap(3);
-        GameSession existingSession = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
+        GameSession existingSession = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         when(gameService.executeTurn(eq(sessionId), any(GameSession.class), eq(playerX)))
                 .thenThrow(new org.example.domain.exception.IntegrityViolationException());
@@ -157,8 +159,9 @@ class GameControllerTest {
         UUID id = UUID.randomUUID();
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
+        java.time.Instant lastActiveAt = java.time.Instant.now();
         GameMap map = new GameMap();
-        GameSession session = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
+        GameSession session = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         when(gameService.executeTurn(eq(id), any(GameSession.class), eq(playerX))).thenAnswer(invocation -> {
             GameSession us = invocation.getArgument(1);
@@ -202,9 +205,10 @@ class GameControllerTest {
         UUID sessionId = UUID.randomUUID();
         UUID playerX = UUID.randomUUID(); // user1
         UUID playerO = UUID.randomUUID(); // user2
+        java.time.Instant lastActiveAt = java.time.Instant.now();
 
         GameMap map = new GameMap(3);
-        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         when(gameService.executeTurn(eq(sessionId), any(GameSession.class), eq(playerO)))
                 .thenThrow(new org.example.domain.exception.NotYourTurnException("Вы не можете ходить, сейчас очередь другого игрока"));
@@ -235,8 +239,9 @@ class GameControllerTest {
     void getGameById_ShouldReturnGame() throws Exception {
         UUID sessionId = UUID.randomUUID();
         UUID playerX = UUID.randomUUID();
+        java.time.Instant lastActiveAt = java.time.Instant.now();
         GameMap map = new GameMap(3);
-        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null, lastActiveAt);
 
         when(gameService.findGameForUser(sessionId, playerX)).thenReturn(session);
 
@@ -256,8 +261,9 @@ class GameControllerTest {
         UUID sessionId = UUID.randomUUID();
         UUID creatorId = UUID.randomUUID();
         UUID guestId = UUID.randomUUID();
+        java.time.Instant lastActiveAt = java.time.Instant.now();
         GameMap map = new GameMap(3);
-        GameSession session = new GameSession(sessionId, map, GameStatus.WAITING_FOR_PLAYERS, creatorId, null, creatorId, null);
+        GameSession session = new GameSession(sessionId, map, GameStatus.WAITING_FOR_PLAYERS, creatorId, null, creatorId, null, lastActiveAt);
 
         when(gameService.joinPlayer(sessionId, guestId)).thenReturn(session);
 
@@ -276,8 +282,9 @@ class GameControllerTest {
     void getActiveGames_ShouldReturnGames() throws Exception {
         UUID sessionId = UUID.randomUUID();
         UUID creatorId = UUID.randomUUID();
+        java.time.Instant lastActiveAt = java.time.Instant.now();
         GameMap map = new GameMap(3);
-        GameSession session = new GameSession(sessionId, map, GameStatus.WAITING_FOR_PLAYERS, creatorId, null, creatorId, null);
+        GameSession session = new GameSession(sessionId, map, GameStatus.WAITING_FOR_PLAYERS, creatorId, null, creatorId, null, lastActiveAt);
 
         Map<UUID, GameSession> activeGames = Map.of(sessionId, session);
         when(gameService.getActiveGames()).thenReturn(activeGames);
@@ -291,8 +298,9 @@ class GameControllerTest {
     void checkOpponentLeft_ShouldReturnUpdatedGame() throws Exception {
         UUID sessionId = UUID.randomUUID();
         UUID playerX = UUID.randomUUID();
+        java.time.Instant lastActiveAt = java.time.Instant.now();
         GameMap map = new GameMap(3);
-        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, UUID.randomUUID(), playerX, null);
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, UUID.randomUUID(), playerX, null, lastActiveAt);
 
         when(gameService.checkOpponentLeft(sessionId, playerX, 30)).thenReturn(session);
 

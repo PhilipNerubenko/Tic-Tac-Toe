@@ -36,20 +36,16 @@ public class GameMapper {
     public static GameSession toDomain(GameSessionEntity entity) {
         if (entity == null) return null;
 
-        GameSession gameSession = new GameSession(
+        return new GameSession(
                 entity.getId(),
                 toMap(entity.getGameMap()),
                 toStatus(entity.getStatus()),
                 entity.getPlayerX(),
                 entity.getPlayerO(),
                 entity.getCurrentPlayer(),
-                entity.getWinner()
+                entity.getWinner(),
+                entity.getLastActiveAt()
         );
-        
-        // Устанавливаем время последнего действия
-        gameSession.setLastActiveAt(entity.getLastActiveAt());
-        
-        return gameSession;
     }
 
     /**
@@ -68,11 +64,9 @@ public class GameMapper {
                 domain.getPlayerX(),
                 domain.getPlayerO(),
                 domain.getCurrentPlayer(),
-                domain.getWinner()
+                domain.getWinner(),
+                domain.getLastActiveAt()
         );
-        
-        // Устанавливаем время последнего действия
-        entity.setLastActiveAt(domain.getLastActiveAt());
         
         return entity;
     }

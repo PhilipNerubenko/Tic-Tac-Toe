@@ -68,9 +68,11 @@ public class GameSession {
      * @param playerO UUID игрока, играющего за O.
      * @param currentPlayer UUID игрока, который должен сделать ход.
      * @param winner UUID победителя, если игра завершена (может быть null).
+     * @param lastActiveAt время последнего действия игрока (может быть null).
      */
     public GameSession(UUID id, GameMap map, GameStatus status,
-                       UUID playerX, UUID playerO, UUID currentPlayer, UUID winner) {
+                       UUID playerX, UUID playerO, UUID currentPlayer, UUID winner,
+                       java.time.Instant lastActiveAt) {
         this.id = id;
         this.map = map;
         this.status = status;
@@ -78,7 +80,7 @@ public class GameSession {
         this.playerO = playerO;
         this.currentPlayer = currentPlayer;
         this.winner = winner;
-        this.lastActiveAt = java.time.Instant.now();
+        this.lastActiveAt = lastActiveAt != null ? lastActiveAt : java.time.Instant.now();
     }
 
     public void joinOpponent(UUID opponentId) {

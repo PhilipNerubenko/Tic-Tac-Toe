@@ -42,7 +42,8 @@ class GameMapperTest {
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
         GameMapEntity mapEntity = new GameMapEntity(3);
-        GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         GameSession domain = GameMapper.toDomain(entity);
 
@@ -52,6 +53,7 @@ class GameMapperTest {
         assertEquals(playerO, domain.getPlayerO());
         assertEquals(GameStatus.PLAYER_TURN, domain.getStatus());
         assertEquals(3, domain.getGameMap().getSize());
+        assertEquals(lastActiveAt, domain.getLastActiveAt());
     }
 
     @Test
@@ -60,7 +62,8 @@ class GameMapperTest {
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
         GameMap map = new GameMap(3);
-        GameSession domain = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSession domain = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         GameSessionEntity entity = GameMapper.toEntity(domain);
 
@@ -76,7 +79,8 @@ class GameMapperTest {
     void toDomainMap_ShouldConvertMapOfEntities() {
         UUID id = UUID.randomUUID();
         GameMapEntity mapEntity = new GameMapEntity(3);
-        GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, UUID.randomUUID(), null, null, null);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, UUID.randomUUID(), null, null, null, lastActiveAt);
 
         Map<UUID, GameSessionEntity> entities = new HashMap<>();
         entities.put(id, entity);

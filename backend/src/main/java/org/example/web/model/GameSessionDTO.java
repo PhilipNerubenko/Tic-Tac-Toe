@@ -43,10 +43,13 @@ public class GameSessionDTO {
      * @param id            уникальный идентификатор сессии.
      * @param gameMap       данные игрового поля.
      * @param status        текущий статус игры.
+     * @param playerX       ID игрока X.
+     * @param playerO       ID игрока O.
      * @param currentPlayer ID игрока, который должен ходить.
      * @param winner        ID победителя (может быть null).
+     * @param lastActiveAt  время последнего действия игрока (может быть null).
      */
-    public GameSessionDTO(UUID id, GameMapDTO gameMap, GameStatusDTO status,  UUID playerX, UUID playerO, UUID currentPlayer, UUID winner) {
+    public GameSessionDTO(UUID id, GameMapDTO gameMap, GameStatusDTO status, UUID playerX, UUID playerO, UUID currentPlayer, UUID winner, java.time.Instant lastActiveAt) {
         this.id = id;
         this.gameMap = gameMap;
         this.status = status;
@@ -54,7 +57,7 @@ public class GameSessionDTO {
         this.playerO = playerO;
         this.currentPlayer = currentPlayer;
         this.winner = winner;
-        this.lastActiveAt = java.time.Instant.now();
+        this.lastActiveAt = lastActiveAt != null ? lastActiveAt : java.time.Instant.now();
     }
 
     /**

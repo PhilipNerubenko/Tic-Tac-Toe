@@ -70,7 +70,7 @@ public class GameSessionEntity {
      * Полный конструктор для маппинга или восстановления сессии.
      */
     public GameSessionEntity(UUID id, GameMapEntity map, GameStatusEntity status,
-                             UUID playerX, UUID playerO, UUID currentPlayer, UUID winner) {
+                             UUID playerX, UUID playerO, UUID currentPlayer, UUID winner, java.time.Instant lastActiveAt) {
         this.id = id;
         this.map = map;
         this.status = status;
@@ -78,7 +78,7 @@ public class GameSessionEntity {
         this.playerO = playerO;
         this.currentPlayer = currentPlayer;
         this.winner = winner;
-        this.lastActiveAt = java.time.Instant.now();
+        this.lastActiveAt = lastActiveAt;
     }
 
     /**

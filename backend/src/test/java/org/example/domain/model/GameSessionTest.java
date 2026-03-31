@@ -157,7 +157,8 @@ class GameSessionTest {
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
         UUID sessionId = UUID.randomUUID();
-        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         assertThat(session.isPlayer(playerO)).isTrue();
     }

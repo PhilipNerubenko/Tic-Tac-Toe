@@ -34,20 +34,16 @@ public class GameMapperDTO {
     public static GameSessionDTO toDTO(GameSession session) {
         if (session == null) return null;
 
-        GameSessionDTO dto = new GameSessionDTO(
+        return new GameSessionDTO(
                 session.getId(),
                 toWebMap(session.getGameMap()),
                 toWebStatus(session.getStatus()),
                 session.getPlayerX(),
                 session.getPlayerO(),
                 session.getCurrentPlayer(),
-                session.getWinner()
+                session.getWinner(),
+                session.getLastActiveAt()
         );
-        
-        // Устанавливаем время последнего действия
-        dto.setLastActiveAt(session.getLastActiveAt());
-        
-        return dto;
     }
 
     /**
@@ -59,21 +55,16 @@ public class GameMapperDTO {
     public static GameSession toDomain(GameSessionDTO dto) {
         if (dto == null) return null;
 
-        // Используем полный конструктор GameSession для восстановления состояния
-        GameSession session = new GameSession(
+        return new GameSession(
                 dto.getId(),
                 toDomainMap(dto.getGameMap()),
                 toDomainStatus(dto.getStatus()),
                 dto.getPlayerX(),
                 dto.getPlayerO(),
                 dto.getCurrentPlayer(),
-                dto.getWinner()
+                dto.getWinner(),
+                dto.getLastActiveAt()
         );
-        
-        // Устанавливаем время последнего действия
-        session.setLastActiveAt(dto.getLastActiveAt());
-        
-        return session;
     }
 
     /**

@@ -31,12 +31,12 @@ class GameRepositoryImplTest {
     @Test
     void findById_ShouldReturnEmptyOptional_WhenStorageReturnsNull() {
         UUID id = UUID.randomUUID();
-        when(jpaGameRepository.findById(id)).thenReturn(Optional.empty());
+        when(jpaGameRepository.findByIdReadOnly(id)).thenReturn(Optional.empty());
 
         Optional<GameSession> result = repository.findById(id);
 
         assertTrue(result.isEmpty());
-        verify(jpaGameRepository).findById(id);
+        verify(jpaGameRepository).findByIdReadOnly(id);
     }
 
     @Test
@@ -45,7 +45,8 @@ class GameRepositoryImplTest {
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
         GameMap map = new GameMap(3);
-        GameSession session = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSession session = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         repository.save(session);
 
@@ -67,7 +68,8 @@ class GameRepositoryImplTest {
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
         GameMapEntity mapEntity = new GameMapEntity(new int[][]{{0}}, 1);
-        GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         when(jpaGameRepository.findAll()).thenReturn(java.util.List.of(entity));
 

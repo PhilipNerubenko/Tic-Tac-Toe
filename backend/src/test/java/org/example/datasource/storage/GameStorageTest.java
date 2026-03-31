@@ -26,7 +26,8 @@ class JpaGameRepositoryTest {
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
         GameMapEntity map = new GameMapEntity(3);
-        GameSessionEntity entity = new GameSessionEntity(id, map, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSessionEntity entity = new GameSessionEntity(id, map, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         when(jpaGameRepository.save(entity)).thenReturn(entity);
         when(jpaGameRepository.findById(id)).thenReturn(Optional.of(entity));
@@ -42,7 +43,8 @@ class JpaGameRepositoryTest {
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
         GameMapEntity map = new GameMapEntity(3);
-        GameSessionEntity entity = new GameSessionEntity(id, map, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSessionEntity entity = new GameSessionEntity(id, map, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         when(jpaGameRepository.save(entity)).thenReturn(entity);
         when(jpaGameRepository.findById(id)).thenReturn(Optional.of(entity));

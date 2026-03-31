@@ -34,12 +34,14 @@ class GameSessionEntityTest {
         UUID playerO = UUID.randomUUID();
         GameMapEntity map = new GameMapEntity(3);
         GameStatusEntity status = GameStatusEntity.DRAW;
+        java.time.Instant lastActiveAt = java.time.Instant.now();
 
-        GameSessionEntity entity = new GameSessionEntity(fixedId, map, status, playerX, playerO, playerX, null);
+        GameSessionEntity entity = new GameSessionEntity(fixedId, map, status, playerX, playerO, playerX, null, lastActiveAt);
 
         assertEquals(fixedId, entity.getId(), "Should preserve the provided UUID");
         assertEquals(map, entity.getGameMap(), "Should preserve the provided map");
         assertEquals(status, entity.getStatus(), "Should preserve the provided status");
+        assertEquals(lastActiveAt, entity.getLastActiveAt(), "Should preserve the provided lastActiveAt");
     }
 
     @Test

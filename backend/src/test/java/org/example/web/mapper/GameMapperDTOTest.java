@@ -45,7 +45,8 @@ class GameMapperDTOTest {
         UUID playerO = UUID.randomUUID();
         int[][] rawMap = {{1, 0}, {0, 2}};
         GameMap domainMap = new GameMap(rawMap, 2);
-        GameSession session = new GameSession(id, domainMap, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSession session = new GameSession(id, domainMap, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         GameSessionDTO dto = GameMapperDTO.toDTO(session);
 
@@ -63,7 +64,8 @@ class GameMapperDTOTest {
         UUID playerO = UUID.randomUUID();
         int[][] rawMap = {{1, 2}, {0, 0}};
         GameMapDTO dtoMap = new GameMapDTO(rawMap, 2);
-        GameSessionDTO dto = new GameSessionDTO(id, dtoMap, GameStatusDTO.PLAYER_TURN, playerX, playerO, playerX, null);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSessionDTO dto = new GameSessionDTO(id, dtoMap, GameStatusDTO.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         GameSession session = GameMapperDTO.toDomain(dto);
 
