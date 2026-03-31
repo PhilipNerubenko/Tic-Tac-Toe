@@ -1,5 +1,6 @@
 package org.example.web.controller;
 
+import org.example.domain.exception.GameDomainException;
 import org.example.domain.exception.GameNotFoundException;
 import org.example.domain.exception.IntegrityViolationException;
 import org.example.domain.exception.NotYourTurnException;
@@ -32,6 +33,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotYourTurnException.class)
     public ResponseEntity<Object> handleNotYourTurn(NotYourTurnException ex) {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    @ExceptionHandler(GameDomainException.class)
+    public ResponseEntity<Object> handleGameDomain(GameDomainException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
