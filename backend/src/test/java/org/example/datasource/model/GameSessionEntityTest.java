@@ -14,7 +14,7 @@ class GameSessionEntityTest {
 
         assertNotNull(entity.getId(), "ID should be generated automatically");
         assertEquals(map, entity.getGameMap(), "Map should match the one passed to constructor");
-        assertEquals(GameStatusEntity.PLAYING, entity.getStatus(), "Initial status should be PLAYING");
+        assertEquals(GameStatusEntity.WAITING_FOR_PLAYERS, entity.getStatus(), "Initial status should be WAITING_FOR_PLAYERS");
     }
 
     @Test
@@ -22,18 +22,20 @@ class GameSessionEntityTest {
         GameMapEntity map = new GameMapEntity(3);
         GameSessionEntity entity = new GameSessionEntity(map);
 
-        entity.setStatus(GameStatusEntity.CROSS_WIN);
+        entity.setStatus(GameStatusEntity.VICTORY);
 
-        assertEquals(GameStatusEntity.CROSS_WIN, entity.getStatus(), "Status should be updated to CROSS_WIN");
+        assertEquals(GameStatusEntity.VICTORY, entity.getStatus(), "Status should be updated to VICTORY");
     }
 
     @Test
     void constructorForRestore_ShouldPreserveAllFields() {
         UUID fixedId = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
         GameMapEntity map = new GameMapEntity(3);
         GameStatusEntity status = GameStatusEntity.DRAW;
 
-        GameSessionEntity entity = new GameSessionEntity(fixedId, map, status);
+        GameSessionEntity entity = new GameSessionEntity(fixedId, map, status, playerX, playerO, playerX, null);
 
         assertEquals(fixedId, entity.getId(), "Should preserve the provided UUID");
         assertEquals(map, entity.getGameMap(), "Should preserve the provided map");

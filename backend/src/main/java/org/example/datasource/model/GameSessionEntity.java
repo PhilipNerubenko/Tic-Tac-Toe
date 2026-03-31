@@ -42,6 +42,10 @@ public class GameSessionEntity {
     @Column(name = "winner_id")
     private UUID winner;
 
+    /** Время последнего действия игрока */
+    @Column(name = "last_active_at")
+    private java.time.Instant lastActiveAt;
+
     /**
      * Конструктор по умолчанию, необходимый для JPA/Hibernate.
      */
@@ -59,12 +63,13 @@ public class GameSessionEntity {
         this.id = UUID.randomUUID();
         this.map = map;
         this.status = GameStatusEntity.WAITING_FOR_PLAYERS;
+        this.lastActiveAt = java.time.Instant.now();
     }
 
     /**
      * Полный конструктор для маппинга или восстановления сессии.
      */
-    public GameSessionEntity(UUID id, GameMapEntity map, GameStatusEntity status, 
+    public GameSessionEntity(UUID id, GameMapEntity map, GameStatusEntity status,
                              UUID playerX, UUID playerO, UUID currentPlayer, UUID winner) {
         this.id = id;
         this.map = map;
@@ -73,6 +78,7 @@ public class GameSessionEntity {
         this.playerO = playerO;
         this.currentPlayer = currentPlayer;
         this.winner = winner;
+        this.lastActiveAt = java.time.Instant.now();
     }
 
     /**
@@ -169,5 +175,21 @@ public class GameSessionEntity {
      */
     public void setWinner(UUID winner) {
         this.winner = winner;
+    }
+    
+    /**
+     * Возвращает время последнего действия игрока.
+     * @return время последнего действия
+     */
+    public java.time.Instant getLastActiveAt() {
+        return lastActiveAt;
+    }
+    
+    /**
+     * Устанавливает время последнего действия игрока.
+     * @param lastActiveAt время последнего действия
+     */
+    public void setLastActiveAt(java.time.Instant lastActiveAt) {
+        this.lastActiveAt = lastActiveAt;
     }
 }

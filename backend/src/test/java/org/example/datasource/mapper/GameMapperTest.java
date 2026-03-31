@@ -43,9 +43,11 @@ class GameMapperTest {
     @Test
     void toDTO_ShouldMapAllFieldsCorrectly() {
         UUID id = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
         int[][] rawMap = {{1, 0}, {0, 2}};
         GameMap domainMap = new GameMap(rawMap, 2);
-        GameSession session = new GameSession(id, domainMap, GameStatus.PLAYING);
+        GameSession session = new GameSession(id, domainMap, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null);
 
         GameSessionEntity dto = GameMapper.toEntity(session);
 
@@ -53,15 +55,17 @@ class GameMapperTest {
         assertEquals(id, dto.getId());
         assertEquals(2, dto.getGameMap().getSize());
         assertArrayEquals(rawMap[0], dto.getGameMap().getMap()[0]);
-        assertEquals(GameStatusEntity.PLAYING, dto.getStatus());
+        assertEquals(GameStatusEntity.PLAYER_TURN, dto.getStatus());
     }
 
     @Test
     void toDomain_ShouldMapAllFieldsCorrectly() {
         UUID id = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
         int[][] rawMap = {{1, 2}, {0, 0}};
         GameMapEntity entityMap = new GameMapEntity(rawMap, 2);
-        GameSessionEntity entity = new GameSessionEntity(id, entityMap, GameStatusEntity.PLAYING);
+        GameSessionEntity entity = new GameSessionEntity(id, entityMap, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null);
 
         GameSession session = GameMapper.toDomain(entity);
 
@@ -69,17 +73,19 @@ class GameMapperTest {
         assertEquals(id, session.getId());
         assertEquals(2, session.getGameMap().getSize());
         assertArrayEquals(rawMap[1], session.getGameMap().getMap()[1]);
-        assertEquals(GameStatus.PLAYING, session.getStatus());
+        assertEquals(GameStatus.PLAYER_TURN, session.getStatus());
     }
 
     @Test
     void toDomainMap_ShouldMapCorrectly() {
         UUID id1 = UUID.randomUUID();
         UUID id2 = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
 
         GameMapEntity mapEntity = new GameMapEntity(new int[][]{{0}}, 1);
-        GameSessionEntity entity1 = new GameSessionEntity(id1, mapEntity, GameStatusEntity.PLAYING);
-        GameSessionEntity entity2 = new GameSessionEntity(id2, mapEntity, GameStatusEntity.CROSS_WIN);
+        GameSessionEntity entity1 = new GameSessionEntity(id1, mapEntity, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null);
+        GameSessionEntity entity2 = new GameSessionEntity(id2, mapEntity, GameStatusEntity.VICTORY, playerX, playerO, playerX, playerX);
 
         Map<UUID, GameSessionEntity> entityMap = Map.of(
                 id1, entity1,
@@ -93,11 +99,11 @@ class GameMapperTest {
 
         assertNotNull(domainMap.get(id1));
         assertEquals(id1, domainMap.get(id1).getId());
-        assertEquals(GameStatus.PLAYING, domainMap.get(id1).getStatus());
+        assertEquals(GameStatus.PLAYER_TURN, domainMap.get(id1).getStatus());
 
         assertNotNull(domainMap.get(id2));
         assertEquals(id2, domainMap.get(id2).getId());
-        assertEquals(GameStatus.CROSS_WIN, domainMap.get(id2).getStatus());
+        assertEquals(GameStatus.VICTORY, domainMap.get(id2).getStatus());
     }
 
     @Test
