@@ -123,11 +123,6 @@ class GameControllerTest {
     void playMove_ShouldReturnBadRequest_WhenMapIsInvalid() throws Exception {
         UUID sessionId = UUID.randomUUID();
         UUID playerX = UUID.randomUUID();
-        UUID playerO = UUID.randomUUID();
-        java.time.Instant lastActiveAt = java.time.Instant.now();
-
-        GameMap map = new GameMap(3);
-        GameSession existingSession = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         when(gameService.executeTurn(eq(sessionId), any(GameSession.class), eq(playerX)))
                 .thenThrow(new org.example.domain.exception.IntegrityViolationException());
