@@ -144,6 +144,7 @@ function App() {
   useEffect(() => {
     if (!isAuthenticated) {
       resetGame();
+      setTimeout(() => setShowProfile(false), 0);
     }
   }, [isAuthenticated, resetGame]);
 
@@ -188,6 +189,7 @@ function App() {
           onBackToMenu={() => {
             game.resetGame();
       setGameStarted(false);
+      setShowProfile(false);
           }} 
           onPlayAgain={() => { 
             game.startNewGame(vsAi); 
