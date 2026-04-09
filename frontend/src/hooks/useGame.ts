@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+
+const checkOpponentAbortControllerRef = { current: null as AbortController | null };
 import type { GameData } from '../interfaces/game';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -98,9 +100,11 @@ export function useGame(): UseGameReturn {
 
       // Немедленно обновляем состояние
       fetchGameState(gameData.id).then((updatedData) => {
-        if (updatedData && updatedData.id === currentGameIdRef.current) {
-          setGameData(updatedData);
-        }
+            if (updatedData && updatedData.id === currentGameIdRef.current) {
+              setGameData(updatedData);
+            } else {
+              return;
+            }
       }).catch((err) => {
         console.error("Polling fetch error:", err);
       });
@@ -114,10 +118,20 @@ export function useGame(): UseGameReturn {
               
               // Если сейчас ход соперника и игра не завершена, проверяем, не покинул ли он игру
               if (updatedData.status === 'PLAYER_TURN' && updatedData.currentPlayer !== user?.userId) {
+                // Abort previous check if it's still running
+                if (checkOpponentAbortControllerRef.current) {
+                  checkOpponentAbortControllerRef.current.abort();
+                }
+
+                // Create a new AbortController for this check
+                checkOpponentAbortControllerRef.current = new AbortController();
+                const signal = checkOpponentAbortControllerRef.current.signal;
+
                 // Автоматически проверяем, покинул ли соперник игру
                 fetch(`/game/${currentGameIdRef.current}/check-opponent-left?timeoutSeconds=30`, {
                   method: 'POST',
                   headers: getAuthHeader(),
+                  signal,
                 })
                   .then((response) => {
                     if (response.ok) {
@@ -127,11 +141,18 @@ export function useGame(): UseGameReturn {
                   })
                   .then((data) => {
                     if (data && isValidGameData(data)) {
+                      if (data.id !== currentGameIdRef.current) {
+                        return;
+                      }
                       setGameData(data as GameData);
                     }
                   })
                   .catch((err) => {
                     console.error('Auto check opponent left error:', err);
+                  })
+                  .finally(() => {
+                    // Clear the AbortController after the request completes
+                    checkOpponentAbortControllerRef.current = null;
                   });
               }
             }
