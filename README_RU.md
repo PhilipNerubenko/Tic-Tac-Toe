@@ -18,8 +18,8 @@
 
 ## Особенности
 
-- ✅ **Backend на Spring Boot 3.3.4** — REST API с полной документацией OpenAPI/Swagger
-- ✅ **Frontend на React 19.2.0** — современный реактивный пользовательский интерфейс
+- ✅ **Spring Boot 3.3.4 Backend** — REST API с полной документацией OpenAPI/Swagger
+- ✅ **React 19.2.0 Frontend** — современный реактивный пользовательский интерфейс
 - ✅ **TypeScript 5.9.3** — строгая типизация для надежного кода
 - ✅ **PostgreSQL 15** — надёжное хранение данных игр и пользователей
 - ✅ **Spring Security** — базовая аутентификация и регистрация
@@ -98,7 +98,7 @@ Tic-Tac-Toe/
 
 Основная игровая панель, где происходит вся магия игры.
 
-- **URL:** [http://localhost:3000](http://localhost:3000) (Docker Compose)
+- **URL:** [http://localhost:3001](http://localhost:3001) (Docker Compose)
 - **URL:** [http://localhost:5173](http://localhost:5173) (локальная разработка)
 
 ### ⚙️ Инструменты разработчика (Backend)
@@ -107,28 +107,28 @@ Backend работает в режиме **Headless API** — корневой �
 
 | Ресурс | Ссылка | Описание |
 | --- | --- | --- |
-| **Swagger UI** | [🔗 Открыть документацию](http://localhost:8080/swagger-ui.html) | Интерактивная документация API. |
-| **OpenAPI (JSON)** | [📄 Спецификация](http://localhost:8080/v3/api-docs) | JSON-спецификация для генерации клиентов или импорта в Postman. |
+| **Swagger UI** | [🔗 Открыть документацию](http://localhost:8081/swagger-ui.html) | Интерактивная документация API. |
+| **OpenAPI (JSON)** | [📄 Спецификация](http://localhost:8081/v3/api-docs) | JSON-спецификация для генерации клиентов или импорта в Postman. |
 
 ### 📡 Примеры взаимодействия с API
 
 ```bash
 # Регистрация нового пользователя
-curl -X POST "http://localhost:8080/auth/signup" \
+curl -X POST "http://localhost:8081/auth/signup" \
      -H "Content-Type: application/json" \
      -d '{"username": "player1", "password": "secret123"}'
 
 # Авторизация
-curl -X POST "http://localhost:8080/auth/login" \
+curl -X POST "http://localhost:8081/auth/login" \
      -H "Content-Type: application/json" \
      -d '{"username": "player1", "password": "secret123"}'
 
 # Создать новую игру (POST /game?size=3)
-curl -s -X POST "http://localhost:8080/game?size=3" \
+curl -s -X POST "http://localhost:8081/game?size=3" \
      -u "$TICTACTOE_USER:$TICTACTOE_PASS"
 
 # Получить статус игры
-curl "http://localhost:8080/game/{id}" \
+curl "http://localhost:8081/game/{id}" \
      -u "$TICTACTOE_USER:$TICTACTOE_PASS"
 ```
 
@@ -150,23 +150,23 @@ DB_NAME=game_sessions_storage
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_INTERNAL_PORT=5432
-DB_EXTERNAL_PORT=5432
+DB_EXTERNAL_PORT=5433
 BACKEND_INTERNAL_PORT=8080
-BACKEND_EXTERNAL_PORT=8080
-FRONTEND_EXTERNAL_PORT=3000
+BACKEND_EXTERNAL_PORT=8081
+FRONTEND_EXTERNAL_PORT=3001
 ```
 
 - **Запустите приложение**
 
 ```bash
-docker-compose up -d
+docker-compose up --build -d
 ```
 
 - **Откройте приложение**
 
-- Frontend: [http://localhost:3000](http://localhost:3000)
-- Backend API: [http://localhost:8080](http://localhost:8080)
-- API документация: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+- Frontend: [http://localhost:3001](http://localhost:3001)
+- Backend API: [http://localhost:8081](http://localhost:8081)
+- API документация: [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
 
 - **Остановка приложения**
 
@@ -183,7 +183,7 @@ docker run -d --name postgres-db \
   -e POSTGRES_DB=game_sessions_storage \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
+  -p 5433:5432 \
   postgres:15-alpine
 ```
 
@@ -198,7 +198,7 @@ cd backend
 - **Установите переменные окружения**
 
 ```bash
-export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/game_sessions_storage
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/game_sessions_storage
 export SPRING_DATASOURCE_USERNAME=postgres
 export SPRING_DATASOURCE_PASSWORD=postgres
 ```
@@ -215,7 +215,7 @@ export SPRING_DATASOURCE_PASSWORD=postgres
 ./gradlew bootRun
 ```
 
-Backend будет доступен по [http://localhost:8080](http://localhost:8080)
+Backend будет доступен по [http://localhost:8081](http://localhost:8081)
 
 #### Frontend (React)
 
@@ -282,8 +282,8 @@ Backend приложения — это **Headless REST API**, разработ�
 
 После запуска backend, полная документация API доступна в Swagger UI:
 
-- **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-- **OpenAPI JSON:** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+- **Swagger UI:** [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
+- **OpenAPI JSON:** [http://localhost:8081/v3/api-docs](http://localhost:8081/v3/api-docs)
 
 Вы можете тестировать все API endpoints прямо из Swagger интерфейса!
 

@@ -20,6 +20,10 @@
 - Node.js 18+
 - Запущенный Java-backend на `http://localhost:8080`
 
+## 📝 Production Deployment
+
+Чтобы развернуть frontend в production environment, вам нужно собрать приложение с помощью `npm run build` и обслуживать статические ресурсы с помощью веб-сервера, такого как Nginx или Apache. Убедитесь, что URL API backend правильно настроен в ваших environment variables. Вы также можете настроить Content Delivery Network (CDN), чтобы улучшить производительность и уменьшить задержку для пользователей по всему миру.
+
 ### Установка
 
 ```bash
