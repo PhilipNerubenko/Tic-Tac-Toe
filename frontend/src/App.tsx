@@ -135,14 +135,15 @@ function App() {
   const [showProfile, setShowProfile] = useState(false);
 
   const game = useGame();
+  const { resetGame } = game;
 
   // Сбрасываем игру при выходе из системы
   useEffect(() => {
     if (!isAuthenticated) {
-      game.resetGame();
+      resetGame();
       setGameStarted(false);
     }
-  }, [isAuthenticated, game]);
+  }, [isAuthenticated, resetGame]);
 
   if (!isAuthenticated) {
     if (authMode === 'login') {
