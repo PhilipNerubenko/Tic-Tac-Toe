@@ -98,7 +98,7 @@ After starting the containers or local servers, the project is available at:
 
 The main game panel where all the magic happens.
 
-- **URL:** [http://localhost:3000](http://localhost:3000) (Docker Compose)
+- **URL:** [http://localhost:3001](http://localhost:3001) (Docker Compose)
 - **URL:** [http://localhost:5173](http://localhost:5173) (local development)
 
 ### ⚙️ Developer Tools (Backend)
@@ -107,28 +107,28 @@ The backend runs as a **Headless API** — the root path is not intended for dir
 
 | Resource | Link | Description |
 | --- | --- | --- |
-| **Swagger UI** | [🔗 Open Documentation](http://localhost:8080/swagger-ui.html) | Interactive API documentation. |
-| **OpenAPI (JSON)** | [📄 Specification](http://localhost:8080/v3/api-docs) | JSON specification for client generation or Postman import. |
+| **Swagger UI** | [🔗 Open Documentation](http://localhost:8081/swagger-ui.html) | Interactive API documentation. |
+| **OpenAPI (JSON)** | [📄 Specification](http://localhost:8081/v3/api-docs) | JSON specification for client generation or Postman import. |
 
 ### 📡 API Request Examples
 
 ```bash
 # Register a new user
-curl -X POST "http://localhost:8080/auth/signup" \
+curl -X POST "http://localhost:8081/auth/signup" \
      -H "Content-Type: application/json" \
      -d '{"username": "player1", "password": "secret123"}'
 
 # Login
-curl -X POST "http://localhost:8080/auth/login" \
+curl -X POST "http://localhost:8081/auth/login" \
      -H "Content-Type: application/json" \
      -d '{"username": "player1", "password": "secret123"}'
 
 # Create a new game (POST /game?size=3)
-curl -s -X POST "http://localhost:8080/game?size=3" \
+curl -s -X POST "http://localhost:8081/game?size=3" \
      -u "$TICTACTOE_USER:$TICTACTOE_PASS"
 
 # Get game status
-curl "http://localhost:8080/game/{id}" \
+curl "http://localhost:8081/game/{id}" \
      -u "$TICTACTOE_USER:$TICTACTOE_PASS"
 ```
 
@@ -150,23 +150,23 @@ DB_NAME=game_sessions_storage
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_INTERNAL_PORT=5432
-DB_EXTERNAL_PORT=5432
+DB_EXTERNAL_PORT=5433
 BACKEND_INTERNAL_PORT=8080
-BACKEND_EXTERNAL_PORT=8080
-FRONTEND_EXTERNAL_PORT=3000
+BACKEND_EXTERNAL_PORT=8081
+FRONTEND_EXTERNAL_PORT=3001
 ```
 
 - **Start the application**
 
 ```bash
-docker-compose up -d
+docker-compose up --build -d
 ```
 
 - **Open the application**
 
-- Frontend: [http://localhost:3000](http://localhost:3000)
-- Backend API: [http://localhost:8080](http://localhost:8080)
-- API Documentation: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+- Frontend: [http://localhost:3001](http://localhost:3001)
+- Backend API: [http://localhost:8081](http://localhost:8081)
+- API Documentation: [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
 
 - **Stop the application**
 
@@ -183,7 +183,7 @@ docker run -d --name postgres-db \
   -e POSTGRES_DB=game_sessions_storage \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
+  -p 5433:5432 \
   postgres:15-alpine
 ```
 
@@ -198,7 +198,7 @@ cd backend
 - **Set environment variables**
 
 ```bash
-export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/game_sessions_storage
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/game_sessions_storage
 export SPRING_DATASOURCE_USERNAME=postgres
 export SPRING_DATASOURCE_PASSWORD=postgres
 ```
@@ -215,7 +215,7 @@ export SPRING_DATASOURCE_PASSWORD=postgres
 ./gradlew bootRun
 ```
 
-Backend will be available at [http://localhost:8080](http://localhost:8080)
+Backend will be available at [http://localhost:8081](http://localhost:8081)
 
 #### Frontend (React)
 
@@ -282,8 +282,8 @@ The backend is a **Headless REST API** built on Spring Boot 3. It provides full 
 
 After starting the backend, full API documentation is available in Swagger UI:
 
-- **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-- **OpenAPI JSON:** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+- **Swagger UI:** [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
+- **OpenAPI JSON:** [http://localhost:8081/v3/api-docs](http://localhost:8081/v3/api-docs)
 
 You can test all API endpoints directly from the Swagger interface!
 
