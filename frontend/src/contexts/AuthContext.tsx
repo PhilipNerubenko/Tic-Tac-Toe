@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode, useEffect, useRef } from 'react';
+import { STORAGE_KEY, PASSWORD_STORAGE_KEY } from '../constants';
 
 interface User {
   userId: string;
@@ -18,8 +19,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'tic_tac_toe_auth';
-const PASSWORD_STORAGE_KEY = 'tic_tac_toe_password';
+
 
 // RFC 7617: кодируем учетные данные Basic Auth с поддержкой UTF-8
 const encodeBasicCredentials = (login: string, password: string) => {
@@ -57,10 +57,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userData = JSON.parse(savedAuth) as User;
         const savedPassword = getStoredPassword();
-        if (savedPassword) {
-          setUser(userData);
-          passwordRef.current = savedPassword;
-        } else {
+      if (savedPassword) {
+        passwordRef.current = savedPassword;
+        setTimeout(() => setUser(userData), 0);
+      } else {
           // Пароль не сохранён в sessionStorage — очищаем данные
           localStorage.removeItem(STORAGE_KEY);
         }
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = useCallback(async (login: string, password: string, _rememberMe?: boolean): Promise<boolean> => {
+  const login = useCallback(async (login: string, password: string): Promise<boolean> => {
     try {
       setError(null);
       const credentials = encodeBasicCredentials(login, password);

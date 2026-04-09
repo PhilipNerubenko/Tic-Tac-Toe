@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface UserInfo {
@@ -16,37 +16,40 @@ export function UserProfile({ onClose }: UserProfileProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+    const cancelled = useRef(false);
+
+    const cancelled = useRef(false);
+
   useEffect(() => {
-    let cancelled = false;
 
-    if (!user?.userId) {
-      setUserInfo(null);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-
-    const loadUserInfo = async () => {
-      setLoading(true);
-      setError(null);
-      const info = await fetchUserById(user.userId);
-      if (cancelled) return;
-
-      if (info) {
-        setUserInfo(info);
-      } else {
+      if (!user?.userId) {
         setUserInfo(null);
-        setError('Failed to load user information');
+        setError(null);
+        setLoading(false);
+        return;
       }
 
-      setLoading(false);
-    };
+      const loadUserInfo = async () => {
+        setLoading(true);
+        setError(null);
+        const info = await fetchUserById(user.userId);
+        if (cancelled.current) return;
 
-    void loadUserInfo();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.userId, fetchUserById]);
+        if (info) {
+          setUserInfo(info);
+        } else {
+          setUserInfo(null);
+          setError('Failed to load user information');
+        }
+
+        setLoading(false);
+      };
+
+      void loadUserInfo();
+      return () => {
+        cancelled.current = true;
+      };
+    }, [user?.userId, fetchUserById]);
 
   return (
     <div className="modal-overlay" onClick={onClose}>

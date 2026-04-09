@@ -153,7 +153,7 @@ export function useGame(): UseGameReturn {
         pollingRef.current = null;
       }
     };
-  }, [gameData?.id, fetchGameState, user]);
+  }, [gameData?.id, fetchGameState, user, getAuthHeader, gameData]);
 
   // Fetch with retry logic
   const fetchWithRetry = useCallback(

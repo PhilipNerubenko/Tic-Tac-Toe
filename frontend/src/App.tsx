@@ -5,10 +5,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
 import { GameModeSelection } from './components/GameModeSelection';
-import { UserProfile } from './components/UserProfile';
-
-function Game({ gameApi, onBackToMenu, onPlayAgain, onShowProfile }: { gameApi: ReturnType<typeof useGame>; onBackToMenu: () => void; onPlayAgain: () => void; onShowProfile: () => void }) {
-  const { gameData, loading, makingMove, error, isNotYourTurn, startNewGame, makeMove, checkOpponentLeft } = gameApi;
+import { UserProfile } from './components/UserProfile';function Game({ gameApi, onBackToMenu, onPlayAgain, onShowProfile, onRetry }: { gameApi: ReturnType<typeof useGame>; onBackToMenu: () => void; onPlayAgain: () => void; onShowProfile: () => void; onRetry: () => void }) {
+  const { gameData, loading, makingMove, error, isNotYourTurn, makeMove, checkOpponentLeft } = gameApi;
   const { logout, user } = useAuth();
 
   if (loading && !gameData) {
@@ -25,7 +23,7 @@ function Game({ gameApi, onBackToMenu, onPlayAgain, onShowProfile }: { gameApi: 
       <div className="welcome-container">
         <h1>Connection Error</h1>
         <p>{error || 'Make sure Java backend is running'}</p>
-        <button onClick={() => startNewGame(true)} className="btn start-btn">
+        <button onClick={() => onRetry()} className="btn start-btn">
           Try Again
         </button>
       </div>
@@ -75,34 +73,39 @@ function Game({ gameApi, onBackToMenu, onPlayAgain, onShowProfile }: { gameApi: 
       >
         {gameData.gameMap.map.map((row: number[], i: number) =>
           row.map((cell: number, j: number) => (
-            <div
+            <button
               key={`${i}-${j}`}
               className={`cell ${cell === 1 ? 'x-player' : cell === 2 ? 'o-player' : ''}`}
               onClick={() => {
-                // Проверяем, может ли пользователь сделать ход
-                const canMakeMove =
-                  gameData.status === 'PLAYER_TURN' &&
+                if (gameData.status === 'PLAYER_TURN' &&
                   isMyTurn &&
                   !makingMove &&
-                  cell === 0;
-                
-                if (canMakeMove) {
+                  cell === 0) {
                   makeMove(i, j);
                 }
               }}
+              disabled={!(gameData.status === 'PLAYER_TURN' &&
+                isMyTurn &&
+                !makingMove &&
+                cell === 0) || makingMove}
+              aria-disabled={!(gameData.status === 'PLAYER_TURN' &&
+                isMyTurn &&
+                !makingMove &&
+                cell === 0) || makingMove}
+              aria-label={`Cell ${i}, ${j}. ${cell === 1 ? 'X' : cell === 2 ? 'O' : 'Empty'}`}
               style={{
                 opacity: makingMove ? 0.6 : 1,
                 cursor:
                   gameData.status === 'PLAYER_TURN' &&
-                  isMyTurn &&
-                  !makingMove &&
-                  cell === 0
+                    isMyTurn &&
+                    !makingMove &&
+                    cell === 0
                     ? 'pointer'
                     : 'not-allowed',
               }}
             >
               {cell === 1 ? 'X' : cell === 2 ? 'O' : ''}
-            </div>
+            </button>
           ))
         )}
       </div>
@@ -141,7 +144,6 @@ function App() {
   useEffect(() => {
     if (!isAuthenticated) {
       resetGame();
-      setGameStarted(false);
     }
   }, [isAuthenticated, resetGame]);
 
@@ -181,17 +183,18 @@ function App() {
 
   return (
     <>
-      <Game 
-        gameApi={game} 
-        onBackToMenu={() => {
-          game.resetGame();
-          setGameStarted(false);
-        }} 
-        onPlayAgain={() => { 
-          game.startNewGame(vsAi); 
-        }}
-        onShowProfile={() => setShowProfile(true)}
-      />
+        <Game 
+          gameApi={game} 
+          onBackToMenu={() => {
+            game.resetGame();
+      setGameStarted(false);
+          }} 
+          onPlayAgain={() => { 
+            game.startNewGame(vsAi); 
+          }}
+          onShowProfile={() => setShowProfile(true)}
+          onRetry={() => game.startNewGame(vsAi)}
+        />
       {showProfile && <UserProfile onClose={() => setShowProfile(false)} />}
     </>
   );
