@@ -11,7 +11,7 @@ import org.example.domain.service.UserService;
 import org.example.web.model.SignUpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -106,21 +106,12 @@ public class AuthController {
      * @return ResponseEntity с информацией о пользователе.
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or #id.toString() == authentication.principal.username")
     @Operation(summary = "Получить информацию о пользователе", description = "Возвращает информацию о пользователе по его UUID")
     @ApiResponse(responseCode = "200", description = "Пользователь найден")
     @ApiResponse(responseCode = "404", description = "Пользователь не найден")
     @ApiResponse(responseCode = "403", description = "Нет доступа к профилю другого пользователя")
     public ResponseEntity<Map<String, Object>> getUserById(@PathVariable UUID id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        Optional<User> requester = userService.findByLogin(authentication.getName());
-        if (requester.isEmpty() || !requester.get().id().equals(id)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
         Optional<User> userOptional = userService.findById(id);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
