@@ -101,6 +101,8 @@ export function useGame(): UseGameReturn {
         if (updatedData && updatedData.id === gameData.id) {
           setGameData(updatedData);
         }
+      }).catch((err) => {
+        console.error("Polling fetch error:", err);
       });
 
       // Запускаем интервал опроса
@@ -153,7 +155,7 @@ export function useGame(): UseGameReturn {
         pollingRef.current = null;
       }
     };
-  }, [gameData?.id, fetchGameState, user, getAuthHeader, gameData]);
+  }, [gameData?.id, fetchGameState, user, getAuthHeader]);
 
   // Fetch with retry logic
   const fetchWithRetry = useCallback(
@@ -225,6 +227,7 @@ export function useGame(): UseGameReturn {
         !user || 
         gameData.gameMap.map[row][col] !== 0 ||
         gameData.status !== 'PLAYER_TURN' ||
+        gameData.currentPlayer !== user.userId ||
         makingMove
       ) {
         return;
