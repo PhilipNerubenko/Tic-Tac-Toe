@@ -16,9 +16,7 @@ export function UserProfile({ onClose }: UserProfileProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-    const cancelled = useRef(false);
-
-    const cancelled = useRef(false);
+  const cancelled = useRef(false);
 
   useEffect(() => {
 
