@@ -98,7 +98,7 @@ export function useGame(): UseGameReturn {
 
       // Немедленно обновляем состояние
       fetchGameState(gameData.id).then((updatedData) => {
-        if (updatedData && updatedData.id === gameData.id) {
+        if (updatedData && updatedData.id === currentGameIdRef.current) {
           setGameData(updatedData);
         }
       }).catch((err) => {
