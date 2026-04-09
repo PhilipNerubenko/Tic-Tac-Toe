@@ -93,8 +93,14 @@ public class GameMapperDTO {
         if (dtoMap == null) return null;
         int size = dtoMap.getSize();
         int[][] source = dtoMap.getMap();
+        if (size <= 0 || source == null || source.length != size) {
+            throw new IllegalArgumentException("Invalid game map payload");
+        }
         int[][] target = new int[size][size];
         for (int i = 0; i < size; i++) {
+             if (source[i] == null || source[i].length != size) {
+                throw new IllegalArgumentException("Invalid game map payload");
+            }
             target[i] = source[i].clone();
         }
         return new GameMap(target, size);
