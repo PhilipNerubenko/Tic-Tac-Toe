@@ -18,7 +18,7 @@ A modern React + TypeScript + Vite frontend for the Tic-Tac-Toe game with authen
 ### Prerequisites
 
 - Node.js 18+
-- Java backend running on `http://localhost:8080`
+- Java backend running on `http://localhost:8081`
 
 ### Installation
 

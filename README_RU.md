@@ -159,7 +159,7 @@ FRONTEND_EXTERNAL_PORT=3001
 - **Запустите приложение**
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
 - **Откройте приложение**
@@ -171,7 +171,7 @@ docker-compose up --build -d
 - **Остановка приложения**
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Вариант 2 — локальная разработка

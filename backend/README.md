@@ -264,7 +264,7 @@ docker run -p 8081:8081 \
 
 From project root:
 ```bash
-docker-compose up backend-api
+docker compose up backend-api
 ```
 
 The frontend will automatically connect to the API on `http://localhost:8081`
