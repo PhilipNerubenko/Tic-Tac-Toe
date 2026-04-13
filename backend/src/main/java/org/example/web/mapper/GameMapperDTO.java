@@ -1,11 +1,13 @@
 package org.example.web.mapper;
 
+import org.example.domain.model.CellType;
 import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
 import org.example.domain.model.GameStatus;
 import org.example.web.model.GameMapDTO;
 import org.example.web.model.GameSessionDTO;
 import org.example.web.model.GameStatusDTO;
+import org.example.web.model.MoveRequest;
 
 /**
  * Компонент-преобразователь (Mapper) для веб-уровня.
@@ -17,7 +19,7 @@ import org.example.web.model.GameStatusDTO;
 public class GameMapperDTO {
 
     /**
-     * Конструктор по умолчанию.
+     * Конструктор по умолчанию запрещен.
      */
     private GameMapperDTO() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
@@ -35,7 +37,12 @@ public class GameMapperDTO {
         return new GameSessionDTO(
                 session.getId(),
                 toWebMap(session.getGameMap()),
-                GameStatusDTO.valueOf(session.getStatus().name())
+                toWebStatus(session.getStatus()),
+                session.getPlayerX(),
+                session.getPlayerO(),
+                session.getCurrentPlayer(),
+                session.getWinner(),
+                session.getLastActiveAt()
         );
     }
 
@@ -51,15 +58,29 @@ public class GameMapperDTO {
         return new GameSession(
                 dto.getId(),
                 toDomainMap(dto.getGameMap()),
-                GameStatus.valueOf(dto.getStatus().name())
+                toDomainStatus(dto.getStatus()),
+                dto.getPlayerX(),
+                dto.getPlayerO(),
+                dto.getCurrentPlayer(),
+                dto.getWinner(),
+                dto.getLastActiveAt()
         );
     }
 
     /**
-     * Создает копию игрового поля в формате DTO.
-     * Выполняет глубокое копирование массива для обеспечения безопасности данных.
+     * Преобразует MoveRequest в доменную модель GameMap.
+     * Используется для обработки хода игрока.
+     *
+     * @param request запрос на ход.
+     * @return доменная модель игрового поля.
      */
+    public static GameMap toGameMap(MoveRequest request) {
+        if (request == null || request.gameMap() == null) return null;
+        return toDomainMap(request.gameMap());
+    }
+
     private static GameMapDTO toWebMap(GameMap domainMap) {
+        if (domainMap == null) return null;
         int[][] rawMap = domainMap.getMap();
         int[][] copy = new int[domainMap.getSize()][domainMap.getSize()];
         for (int i = 0; i < domainMap.getSize(); i++) {
@@ -68,18 +89,30 @@ public class GameMapperDTO {
         return new GameMapDTO(copy, domainMap.getSize());
     }
 
-    /**
-     * Преобразует DTO игрового поля в доменную структуру.
-     */
     private static GameMap toDomainMap(GameMapDTO dtoMap) {
+        if (dtoMap == null) return null;
         int size = dtoMap.getSize();
         int[][] source = dtoMap.getMap();
-
+        if (size <= 0 || source == null || source.length != size) {
+            throw new IllegalArgumentException("Invalid game map payload");
+        }
         int[][] target = new int[size][size];
         for (int i = 0; i < size; i++) {
+             if (source[i] == null || source[i].length != size) {
+                throw new IllegalArgumentException("Invalid game map payload");
+            }
             target[i] = source[i].clone();
         }
-
         return new GameMap(target, size);
+    }
+
+    private static GameStatusDTO toWebStatus(GameStatus status) {
+        if (status == null) return null;
+        return GameStatusDTO.valueOf(status.name());
+    }
+
+    private static GameStatus toDomainStatus(GameStatusDTO dtoStatus) {
+        if (dtoStatus == null) return null;
+        return GameStatus.valueOf(dtoStatus.name());
     }
 }

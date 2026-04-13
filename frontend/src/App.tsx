@@ -1,17 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import { useGame } from './hooks/useGame';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
-
-function Game() {
-  const { gameData, loading, makingMove, error, startNewGame, makeMove } = useGame();
-  const { logout } = useAuth();
-
-  useEffect(() => {
-    startNewGame();
-  }, [startNewGame]);
+import { GameModeSelection } from './components/GameModeSelection';
+import { UserProfile } from './components/UserProfile';function Game({ gameApi, onBackToMenu, onPlayAgain, onShowProfile, onRetry }: { gameApi: ReturnType<typeof useGame>; onBackToMenu: () => void; onPlayAgain: () => void; onShowProfile: () => void; onRetry: () => void }) {
+  const { gameData, loading, makingMove, error, isNotYourTurn, makeMove, checkOpponentLeft } = gameApi;
+  const { logout, user } = useAuth();
 
   if (loading && !gameData) {
     return (
@@ -27,7 +23,7 @@ function Game() {
       <div className="welcome-container">
         <h1>Connection Error</h1>
         <p>{error || 'Make sure Java backend is running'}</p>
-        <button onClick={startNewGame} className="btn start-btn">
+        <button onClick={() => onRetry()} className="btn start-btn">
           Try Again
         </button>
       </div>
@@ -35,24 +31,39 @@ function Game() {
   }
 
   const boardSize = gameData.gameMap.size;
+  
+  // Проверяем, является ли текущий пользователь тем, кто должен ходить
+  const isMyTurn = gameData.currentPlayer === user?.userId;
+  
   const statusText =
     {
-      PLAYING: 'Your turn',
-      CROSS_WIN: 'You won! 🎉',
-      ZERO_WIN: 'AI won!',
+      WAITING_FOR_PLAYERS: 'Waiting for players...',
+      PLAYER_TURN: isMyTurn ? 'Your turn' : "Opponent's turn",
+      VICTORY: gameData.winner ? (gameData.winner === user?.userId ? 'You won! 🎉' : 'Opponent won!') : 'Victory!',
       DRAW: 'Draw!',
+      OPPONENT_LEFT: 'Opponent left the game! You win! 🎉',
     }[gameData.status] || gameData.status;
 
   return (
     <div className="game-container">
       <div className="game-header">
         <h1 className="game-title">Tic-Tac-Toe</h1>
-        <button onClick={logout} className="btn logout-btn">
-          Logout
-        </button>
+        <div className="header-buttons">
+          <button onClick={onShowProfile} className="btn profile-btn">
+            Profile
+          </button>
+          <button onClick={logout} className="btn logout-btn">
+            Logout
+          </button>
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
+      {isNotYourTurn && !error && (
+        <div className="error-message" style={{ backgroundColor: '#ffcc00', color: '#333' }}>
+          Сейчас не ваш ход!
+        </div>
+      )}
 
       <div
         className={`board ${makingMove ? 'disabled' : ''}`}
@@ -62,25 +73,57 @@ function Game() {
       >
         {gameData.gameMap.map.map((row: number[], i: number) =>
           row.map((cell: number, j: number) => (
-            <div
+            <button
               key={`${i}-${j}`}
               className={`cell ${cell === 1 ? 'x-player' : cell === 2 ? 'o-player' : ''}`}
-              onClick={() => makeMove(i, j)}
+              onClick={() => {
+                if (gameData.status === 'PLAYER_TURN' &&
+                  isMyTurn &&
+                  !makingMove &&
+                  cell === 0) {
+                  makeMove(i, j);
+                }
+              }}
+              disabled={!(gameData.status === 'PLAYER_TURN' &&
+                isMyTurn &&
+                !makingMove &&
+                cell === 0) || makingMove}
+              aria-disabled={!(gameData.status === 'PLAYER_TURN' &&
+                isMyTurn &&
+                !makingMove &&
+                cell === 0) || makingMove}
+              aria-label={`Cell ${i}, ${j}. ${cell === 1 ? 'X' : cell === 2 ? 'O' : 'Empty'}`}
               style={{
                 opacity: makingMove ? 0.6 : 1,
-                cursor: makingMove ? 'not-allowed' : 'pointer',
+                cursor:
+                  gameData.status === 'PLAYER_TURN' &&
+                    isMyTurn &&
+                    !makingMove &&
+                    cell === 0
+                    ? 'pointer'
+                    : 'not-allowed',
               }}
             >
               {cell === 1 ? 'X' : cell === 2 ? 'O' : ''}
-            </div>
+            </button>
           ))
         )}
       </div>
 
       <div className="status-panel">
         <div className="status-badge">{statusText}</div>
-        <button onClick={startNewGame} className="btn" disabled={loading}>
-          {loading ? 'Loading...' : 'New Game'}
+        {(gameData.status === 'VICTORY' || gameData.status === 'DRAW' || gameData.status === 'OPPONENT_LEFT') && (
+          <button onClick={onPlayAgain} className="btn play-again-btn">
+            Play Again
+          </button>
+        )}
+        {gameData.status === 'PLAYER_TURN' && !isMyTurn && (
+          <button onClick={checkOpponentLeft} className="btn check-opponent-btn">
+            Check if opponent left
+          </button>
+        )}
+        <button onClick={onBackToMenu} className="btn back-btn">
+          Back to Menu
         </button>
       </div>
     </div>
@@ -89,7 +132,21 @@ function Game() {
 
 function App() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
+  const [gameStarted, setGameStarted] = useState(false);
+  const [vsAi, setVsAi] = useState<boolean>(true);
+  const [showProfile, setShowProfile] = useState(false);
+
+  const game = useGame();
+  const { resetGame } = game;
+
+  // Сбрасываем игру при выходе из системы
+  useEffect(() => {
+    if (!isAuthenticated) {
+      resetGame();
+      setTimeout(() => setShowProfile(false), 0);
+    }
+  }, [isAuthenticated, resetGame]);
 
   if (!isAuthenticated) {
     if (authMode === 'login') {
@@ -99,7 +156,50 @@ function App() {
     }
   }
 
-  return <Game />;
+  if (!gameStarted) {
+    return (
+      <div className="game-mode-selection-screen">
+        <div className="game-header">
+          <h1 className="game-title">Tic-Tac-Toe</h1>
+          <button onClick={logout} className="btn logout-btn">
+            Logout
+          </button>
+        </div>
+        <GameModeSelection
+          onStartGame={(vsAiMode) => {
+            setVsAi(vsAiMode);
+            game.startNewGame(vsAiMode);
+            setGameStarted(true);
+          }}
+          onJoinGame={(sessionId) => {
+            // Join the existing game (always human vs human)
+            setVsAi(false);
+            game.joinGame(sessionId);
+            setGameStarted(true);
+          }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <>
+        <Game 
+          gameApi={game} 
+          onBackToMenu={() => {
+            game.resetGame();
+      setGameStarted(false);
+      setShowProfile(false);
+          }} 
+          onPlayAgain={() => { 
+            game.startNewGame(vsAi); 
+          }}
+          onShowProfile={() => setShowProfile(true)}
+          onRetry={() => game.startNewGame(vsAi)}
+        />
+      {showProfile && <UserProfile onClose={() => setShowProfile(false)} />}
+    </>
+  );
 }
 
 function AppWrapper() {

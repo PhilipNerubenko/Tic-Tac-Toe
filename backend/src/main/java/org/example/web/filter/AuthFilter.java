@@ -29,17 +29,9 @@ public class AuthFilter extends GenericFilterBean {
 
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-
-        String path = httpRequest.getServletPath();
-
-        // 1. Пропускаем публичные эндпоинты
-        if ("/auth/signup".equals(path) || "/auth/signin".equals(path)) {
-            chain.doFilter(request, response);
-            return;
-        }
-
         String authorizationHeader = httpRequest.getHeader("Authorization");
 
+        // Если есть заголовок Basic Auth — пытаемся аутентифицировать
         if (authorizationHeader != null && authorizationHeader.startsWith("Basic ")) {
             try {
                 String base64Credentials = authorizationHeader.substring("Basic ".length());
@@ -52,26 +44,28 @@ public class AuthFilter extends GenericFilterBean {
 
                     if (userService.validateCredentials(login, password)) {
                         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                                login,
-                                null,
-                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                                login, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
                         );
-
-                        // Устанавливаем аутентификацию в контекст для текущего потока/запроса
                         SecurityContextHolder.getContext().setAuthentication(auth);
-
                         chain.doFilter(request, response);
+                    } else {
+                        // Валидация не прошла — возвращаем 401
+                        httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
                         return;
                     }
+                } else {
+                    // Некорректный формат credentials — возвращаем 401
+                    httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+                    return;
                 }
             } catch (Exception e) {
-                // Ошибка декодирования — игнорируем, выдадим 401 ниже
+                // Ошибка парсинга — возвращаем 401
+                httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+                return;
             }
+        } else {
+            // Нет заголовка Authorization — просто продолжаем цепочку
+            chain.doFilter(request, response);
         }
-
-        httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
-        httpResponse.setContentType("application/json");
-        httpResponse.setCharacterEncoding("UTF-8");
-        httpResponse.getWriter().write("{\"error\": \"Unauthorized\"}");
     }
 }

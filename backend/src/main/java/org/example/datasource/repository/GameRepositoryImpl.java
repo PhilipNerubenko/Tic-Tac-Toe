@@ -4,6 +4,7 @@ import org.example.datasource.mapper.GameMapper;
 import org.example.datasource.model.GameSessionEntity;
 import org.example.domain.model.GameSession;
 import org.example.domain.repository.GameRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Optional;
@@ -44,13 +45,32 @@ public class GameRepositoryImpl implements GameRepository {
 
     /**
      * Находит игровую сессию по её уникальному идентификатору.
+     * Используется для операций только на чтение (без блокировки).
      *
      * @param id UUID сессии.
      * @return {@link Optional}, содержащий доменную модель игры,
      * или пустой Optional, если игра не найдена.
      */
     @Override
+    @Transactional
     public Optional<GameSession> findById(UUID id) {
+        return jpaGameRepository.findByIdReadOnly(id)
+                .map(GameMapper::toDomain);
+    }
+
+    /**
+     * Находит игровую сессию с пессимистичной блокировкой для записи.
+     * Используется перед операциями изменения (executeTurn, joinPlayer).
+     * <p>
+     * ВАЖНО: этот метод должен вызываться внутри транзакции сервиса,
+     * чтобы блокировка сохранялась до завершения операции сохранения.
+     *
+     * @param id UUID сессии.
+     * @return {@link Optional}, содержащий доменную модель игры,
+     * или пустой Optional, если игра не найдена.
+     */
+    @Override
+    public Optional<GameSession> findByIdForUpdate(UUID id) {
         return jpaGameRepository.findById(id)
                 .map(GameMapper::toDomain);
     }

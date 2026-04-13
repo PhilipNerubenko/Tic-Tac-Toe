@@ -41,9 +41,12 @@ class GameMapperDTOTest {
     @Test
     void toDTO_ShouldMapAllFieldsCorrectly() {
         UUID id = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
         int[][] rawMap = {{1, 0}, {0, 2}};
         GameMap domainMap = new GameMap(rawMap, 2);
-        GameSession session = new GameSession(id, domainMap, GameStatus.PLAYING);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSession session = new GameSession(id, domainMap, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         GameSessionDTO dto = GameMapperDTO.toDTO(session);
 
@@ -51,15 +54,18 @@ class GameMapperDTOTest {
         assertEquals(id, dto.getId());
         assertEquals(2, dto.getGameMap().getSize());
         assertArrayEquals(rawMap[0], dto.getGameMap().getMap()[0]);
-        assertEquals(GameStatusDTO.PLAYING, dto.getStatus());
+        assertEquals(GameStatusDTO.PLAYER_TURN, dto.getStatus());
     }
 
     @Test
     void toDomain_ShouldMapAllFieldsCorrectly() {
         UUID id = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
         int[][] rawMap = {{1, 2}, {0, 0}};
         GameMapDTO dtoMap = new GameMapDTO(rawMap, 2);
-        GameSessionDTO dto = new GameSessionDTO(id, dtoMap, GameStatusDTO.PLAYING);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSessionDTO dto = new GameSessionDTO(id, dtoMap, GameStatusDTO.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         GameSession session = GameMapperDTO.toDomain(dto);
 
@@ -67,6 +73,6 @@ class GameMapperDTOTest {
         assertEquals(id, session.getId());
         assertEquals(2, session.getGameMap().getSize());
         assertArrayEquals(rawMap[1], session.getGameMap().getMap()[1]);
-        assertEquals(GameStatus.PLAYING, session.getStatus());
+        assertEquals(GameStatus.PLAYER_TURN, session.getStatus());
     }
 }

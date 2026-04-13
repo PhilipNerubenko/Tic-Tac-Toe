@@ -1,8 +1,11 @@
 package org.example.domain.service;
 
+import org.example.domain.exception.DuplicateUserException;
 import org.example.domain.model.CellType;
 import org.example.domain.model.User;
 import org.example.domain.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -17,13 +20,18 @@ public class UserServiceImpl implements UserService {
     /** Репозиторий для работы с пользователями */
     private final UserRepository userRepository;
 
+    /** Кодировщик паролей для безопасного хранения */
+    private final PasswordEncoder passwordEncoder;
+
     /**
      * Создает экземпляр сервиса.
      *
-     * @param userRepository репозиторий для работы с пользователями.
+     * @param userRepository    репозиторий для работы с пользователями.
+     * @param passwordEncoder   кодировщик паролей.
      */
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -32,15 +40,16 @@ public class UserServiceImpl implements UserService {
      * @param login    уникальное имя пользователя.
      * @param password пароль пользователя.
      * @return созданный пользователь.
-     * @throws IllegalArgumentException если пользователь с таким логином уже существует.
+     * @throws DuplicateUserException если пользователь с таким логином уже существует.
      */
     @Override
+    @Transactional
     public User register(String login, String password) {
         if (userRepository.existsByLogin(login)) {
-            throw new IllegalArgumentException("User with login '" + login + "' already exists");
+            throw new DuplicateUserException("Login already in use");
         }
 
-        User user = new User(UUID.randomUUID(), login, password, CellType.CROSS);
+        User user = new User(UUID.randomUUID(), login, passwordEncoder.encode(password), CellType.CROSS);
         userRepository.save(user);
         return user;
     }
@@ -53,6 +62,7 @@ public class UserServiceImpl implements UserService {
      * или пустой {@link Optional}, если пользователь не найден.
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<User> findByLogin(String login) {
         return userRepository.findByLogin(login);
     }
@@ -65,6 +75,7 @@ public class UserServiceImpl implements UserService {
      * или пустой {@link Optional}, если пользователь не найден.
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<User> findById(UUID id) {
         return userRepository.findById(id);
     }
@@ -76,6 +87,7 @@ public class UserServiceImpl implements UserService {
      * @return {@code true}, если пользователь с таким логином существует.
      */
     @Override
+    @Transactional(readOnly = true)
     public boolean existsByLogin(String login) {
         return userRepository.existsByLogin(login);
     }
@@ -88,8 +100,9 @@ public class UserServiceImpl implements UserService {
      * @return {@code true}, если логин и пароль верны.
      */
     @Override
+    @Transactional(readOnly = true)
     public boolean validateCredentials(String login, String password) {
         Optional<User> user = userRepository.findByLogin(login);
-        return user.isPresent() && user.get().password().equals(password);
+        return user.isPresent() && passwordEncoder.matches(password, user.get().password());
     }
 }

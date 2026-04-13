@@ -1,7 +1,9 @@
 package org.example.domain.service;
 
+import org.example.domain.exception.DuplicateUserException;
+import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
-import org.example.web.model.SignUpRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -27,18 +29,15 @@ public class AuthServiceImpl implements AuthService {
     /**
      * Регистрирует нового пользователя в системе.
      *
-     * @param request запрос на регистрацию с логином и паролем.
+     * @param command команда на регистрацию с логином и паролем.
      * @return {@code true}, если регистрация прошла успешно.
-     * @throws IllegalArgumentException если пользователь с таким логином уже существует.
+     * @throws DuplicateUserException если пользователь с таким логином уже существует.
      */
     @Override
-    public boolean signUp(SignUpRequest request) {
-        try {
-            userService.register(request.login(), request.password());
-            return true;
-        } catch (IllegalArgumentException e) {
-            throw e;
-        }
+    @Transactional
+    public boolean signUp(RegistrationCommand command) {
+        userService.register(command.login(), command.password());
+        return true;
     }
 
     /**
@@ -50,6 +49,7 @@ public class AuthServiceImpl implements AuthService {
      * @throws IllegalArgumentException если логин или пароль неверны.
      */
     @Override
+    @Transactional(readOnly = true)
     public UUID signIn(String login, String password) {
         if (!userService.validateCredentials(login, password)) {
             throw new IllegalArgumentException("Invalid login or password");

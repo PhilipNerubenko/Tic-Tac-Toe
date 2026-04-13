@@ -1,277 +1,346 @@
-# Крестики-нолики (Tic-Tac-Toe)
+# Tic-Tac-Toe
 
 [![Java 18](https://img.shields.io/badge/Java-18-orange?style=flat-square)](https://www.java.com/)
-[![Spring Boot 3.2.2](https://img.shields.io/badge/Spring%20Boot-3.2.2-brightgreen?style=flat-square)](https://spring.io/projects/spring-boot)
+[![Spring Boot 3.3.4](https://img.shields.io/badge/Spring%20Boot-3.3.4-brightgreen?style=flat-square)](https://spring.io/projects/spring-boot)
 [![React 19.2.0](https://img.shields.io/badge/React-19.2.0-61dafb?style=flat-square&logo=react)](https://react.dev/)
 [![TypeScript 5.9.3](https://img.shields.io/badge/TypeScript-5.9.3-3178c6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Vite 7.2.4](https://img.shields.io/badge/Vite-7.2.4-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
-[![Docker 29.2.1](https://img.shields.io/badge/Docker-29.2.1-2496ed?style=flat-square&logo=docker)](https://www.docker.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ed?style=flat-square&logo=docker)](https://www.docker.com/)
+[![PostgreSQL 15](https://img.shields.io/badge/PostgreSQL-15-336791?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
 
-## Описание
+## Description
 
-Полнофункциональное веб-приложение классической игры "Крестики-нолики" с современной многоуровневой архитектурой. Проект демонстрирует лучшие практики разработки с использованием Spring Boot для backend и React для frontend.
+A full-featured web application for the classic Tic-Tac-Toe game with user authentication, player profiles, and modern multi-layer architecture. This project demonstrates best practices in development using Spring Boot for the backend and React for the frontend.
 
 <p align="center">
-  <img src="./assets/game-preview.png" width="600" alt="Tic-Tac-Toe Preview">
+  <img src="./assets/game_preview.png" width="600" alt="Tic-Tac-Toe Preview">
 </p>
 
-## Особенности
+## Features
 
-- ✅ **Backend на Spring Boot 3.2.2** - REST API с полной документацией OpenAPI/Swagger
-- ✅ **Frontend на React 19.2.0** - современный реактивный пользовательский интерфейс
-- ✅ **TypeScript 5.9.3** - строгая типизация для надежного кода
-- ✅ **Docker Compose** - простое одноэтапное развертывание
-- ✅ **Слоистая архитектура** - разделение на слои (Web, Domain, Datasource)
-- ✅ **Dependency Injection** - управление зависимостями через Spring DI
-- ✅ **API документация** - интерактивная Swagger UI
+- ✅ **Spring Boot 3.3.4 Backend** — REST API with full OpenAPI/Swagger documentation
+- ✅ **React 19.2.0 Frontend** — Modern reactive user interface
+- ✅ **TypeScript 5.9.3** — Strict typing for reliable code
+- ✅ **PostgreSQL 15** — Reliable storage for game and user data
+- ✅ **Spring Security** — Basic authentication and registration
+- ✅ **Docker Compose** — Simple one-step deployment (3 containers: DB, Backend, Frontend)
+- ✅ **Layered Architecture** — Clean separation (Web, Domain, Datasource layers)
+- ✅ **Dependency Injection** — Spring DI container management
+- ✅ **API Documentation** — Interactive Swagger UI
 
-## Структура проекта
+## Screenshots
+
+### Login Form
+
+<p align="center">
+  <img src="./assets/form_for_login.png" width="600" alt="Login Form">
+</p>
+
+### Registration Form
+
+<p align="center">
+  <img src="./assets/form_for_register.png" width="600" alt="Registration Form">
+</p>
+
+### Game Mode Menu
+
+<p align="center">
+  <img src="./assets/game_mode_menu.png" width="600" alt="Game Mode Menu">
+</p>
+
+## Project Structure
 
 ```text
 Tic-Tac-Toe/
-├── backend/                    # Spring Boot приложение
+├── backend/                    # Spring Boot application
 │   ├── src/main/java/org/example/
-│   │   ├── Main.java          # Точка входа приложения
-│   │   ├── web/               # REST контроллеры
-│   │   ├── domain/            # Бизнес-логика
-│   │   ├── datasource/        # Работа с данными
-│   │   └── di/                # Конфигурация DI
-│   ├── build.gradle.kts       # Gradle конфигурация
-│   └── Dockerfile             # Docker образ для backend
+│   │   ├── Main.java          # Application entry point
+│   │   ├── web/               # REST controllers (Auth, Game)
+│   │   ├── domain/            # Business logic (Auth, Game, User)
+│   │   ├── datasource/        # Data access (JPA, PostgreSQL)
+│   │   └── di/                # DI and Security configuration
+│   ├── build.gradle.kts       # Gradle configuration
+│   └── Dockerfile             # Docker image for backend
 │
-├── frontend/                   # React приложение
+├── frontend/                   # React application
 │   ├── src/
-│   │   ├── App.tsx           # Главный компонент
-│   │   ├── hooks/            # Custom React hooks
-│   │   ├── interfaces/       # TypeScript интерфейсы
-│   │   └── main.tsx          # Точка входа
-│   ├── package.json          # Зависимости npm
-│   ├── vite.config.ts        # Vite конфигурация
-│   └── Dockerfile            # Docker образ для frontend
+│   │   ├── App.tsx           # Main component
+│   │   ├── components/       # UI components (Login, Register, Game, Profile)
+│   │   ├── contexts/         # React Context (AuthContext)
+│   │   ├── hooks/            # Custom React hooks (useGame)
+│   │   └── interfaces/       # TypeScript interfaces
+│   ├── package.json          # npm dependencies
+│   ├── vite.config.ts        # Vite configuration
+│   └── Dockerfile            # Docker image for frontend
 │
-└── docker-compose.yml        # Оркестрация контейнеров
+└── docker-compose.yml        # Container orchestration (DB + Backend + Frontend)
 ```
 
-## Предварительные требования
+## Prerequisites
 
-### Для локальной разработки
+### For Local Development
 
-- **Java 18+** ([установка](https://www.oracle.com/java/technologies/downloads/))
-- **Node.js 20+** и npm ([установка](https://nodejs.org/))
-- **Gradle** (встроен через Gradle Wrapper)
+- **Java 18+** ([download](https://www.oracle.com/java/technologies/downloads/))
+- **Node.js 20+** and npm ([download](https://nodejs.org/))
+- **PostgreSQL 15+** (or use Docker Compose)
+- **Gradle** (included via Gradle Wrapper)
 
-### Для развертывания с Docker
+### For Docker Deployment
 
-- **Docker** 29.2.1+
-- **Docker Compose** 1.29.2+
+- **Docker** 20.10+
+- **Docker Compose** 2.0+
 
-## 🚀 Как пользоваться приложением
+## 🚀 How to Use the Application
 
-После запуска контейнеров или локальных серверов, проект доступен по следующим адресам:
+After starting the containers or local servers, the project is available at:
 
-### 🖥 Пользовательский интерфейс (Frontend)
+### 🖥 User Interface (Frontend)
 
-Основная игровая панель, где происходит вся магия игры.
+The main game panel where all the magic happens.
 
-- **URL:** [http://localhost:3000](http://localhost:3000) (Docker Compose)
-- **URL:** [http://localhost:5173](http://localhost:5173) (локальная разработка)
+- **URL:** [http://localhost:3001](http://localhost:3001) (Docker Compose)
+- **URL:** [http://localhost:5173](http://localhost:5173) (local development)
 
-### ⚙️ Инструменты разработчика (Backend)
+### ⚙️ Developer Tools (Backend)
 
-Backend работает в режиме **Headless API** — корневой путь не предназначен для прямого открытия. Используйте следующие ресурсы:
+The backend runs as a **Headless API** — the root path is not intended for direct access. Use the following resources:
 
-| Ресурс | Ссылка | Описание |
+| Resource | Link | Description |
 | --- | --- | --- |
-| **Swagger UI** | [🔗 Открыть документацию](http://localhost:8080/swagger-ui.html) | Интерактивная документация API. |
-| **OpenAPI (JSON)** | [📄 Спецификация](http://localhost:8080/v3/api-docs) | JSON-спецификация для генерации клиентов или импорта в Postman. |
+| **Swagger UI** | [🔗 Open Documentation](http://localhost:8081/swagger-ui.html) | Interactive API documentation. |
+| **OpenAPI (JSON)** | [📄 Specification](http://localhost:8081/v3/api-docs) | JSON specification for client generation or Postman import. |
 
-### 📡 Примеры взаимодействия с API
+### 📡 API Request Examples
 
 ```bash
-# Создать новую игру (POST /game?size=3)
-curl -s -X POST "http://localhost:8080/game?size=3" \
-           -H "Content-Type: application/json"
-
-# Сделать ход (POST /game/{id}) — в теле передаётся объект `GameSessionDTO`
-# Пример корректного JSON (числовая карта: 0=empty, 1=X, 2=O):
-curl -X POST "http://localhost:8080/game/828bf6bb-2725-493c-b052-6ce0d5faaa7b" \
+# Register a new user
+curl -X POST "http://localhost:8081/auth/signup" \
      -H "Content-Type: application/json" \
-     -d '{
-          "id": "828bf6bb-2725-493c-b052-6ce0d5faaa7b",
-          "gameMap": {
-               "map": [
-                    [2, 2, 1],
-                    [1, 1, 2],
-                    [2, 1, 1]
-               ],
-               "size": 3
-          },
-          "status": "PLAYING"
-     }'
+     -d '{"username": "player1", "password": "secret123"}'
 
-# Примечание: контроллер берёт `id` из пути и перезаписывает идентификатор из тела,
-# поэтому передавать `id` в теле не обязательно — важно корректное содержимое `gameMap` и `status`.
+# Login
+curl -X POST "http://localhost:8081/auth/login" \
+     -H "Content-Type: application/json" \
+     -d '{"username": "player1", "password": "secret123"}'
 
+# Create a new game (POST /game?size=3)
+curl -s -X POST "http://localhost:8081/game?size=3" \
+     -u "$TICTACTOE_USER:$TICTACTOE_PASS"
+
+# Get game status
+curl "http://localhost:8081/game/{id}" \
+     -u "$TICTACTOE_USER:$TICTACTOE_PASS"
 ```
 
-## 🔧 Установка и запуск
+## 🔧 Installation and Setup
 
-### Вариант 1 — развертывание с Docker Compose (рекомендуется)
+### Option 1 — Docker Compose Deployment (Recommended)
 
-- **Клонируйте репозиторий**
+- **Clone the repository**
 
 ```bash
 git clone <repository-url>
 cd Tic-Tac-Toe
 ```
 
-- **Запустите приложение**
+- **Create .env file** (if not present)
 
-```bash
-docker-compose up -d
+```env
+DB_NAME=game_sessions_storage
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_INTERNAL_PORT=5432
+DB_EXTERNAL_PORT=5433
+BACKEND_INTERNAL_PORT=8080
+BACKEND_EXTERNAL_PORT=8081
+FRONTEND_EXTERNAL_PORT=3001
 ```
 
-- **Откройте приложение**
+- **Start the application**
 
-- Frontend: [http://localhost:3000](http://localhost:3000)
-- Backend API: [http://localhost:8080](http://localhost:8080)
-- API документация: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+```bash
+docker-compose up --build -d
+```
 
-- **Остановка приложения**
+- **Open the application**
+
+- Frontend: [http://localhost:3001](http://localhost:3001)
+- Backend API: [http://localhost:8081](http://localhost:8081)
+- API Documentation: [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
+
+- **Stop the application**
 
 ```bash
 docker-compose down
 ```
 
-### Вариант 2 — локальная разработка
+### Option 2 — Local Development
+
+#### PostgreSQL
+
+```bash
+docker run -d --name postgres-db \
+  -e POSTGRES_DB=game_sessions_storage \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5433:5432 \
+  postgres:15-alpine
+```
 
 #### Backend (Spring Boot)
 
-- **Перейдите в директорию backend**
+- **Navigate to backend directory**
 
 ```bash
 cd backend
 ```
 
-- **Создайте jar файл**
+- **Set environment variables**
+
+```bash
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/game_sessions_storage
+export SPRING_DATASOURCE_USERNAME=postgres
+export SPRING_DATASOURCE_PASSWORD=postgres
+```
+
+- **Build the jar file**
 
 ```bash
 ./gradlew build
 ```
 
-- **Запустите приложение**
+- **Run the application**
 
 ```bash
 ./gradlew bootRun
 ```
 
-Backend будет доступен по [http://localhost:8080](http://localhost:8080)
+Backend will be available at [http://localhost:8081](http://localhost:8081)
 
 #### Frontend (React)
 
-- **Перейдите в директорию frontend**
+- **Navigate to frontend directory**
 
 ```bash
 cd frontend
 ```
 
-- **Установите зависимости**
+- **Install dependencies**
 
 ```bash
 npm install
 ```
 
-- **Запустите dev сервер**
+- **Start dev server**
 
 ```bash
 npm run dev
 ```
 
-Frontend доступен по [http://localhost:5173](http://localhost:5173) (dev сервер Vite)
+Frontend will be available at [http://localhost:5173](http://localhost:5173) (Vite dev server)
 
-## Доступные команды
+## Available Commands
 
 ### Backend (Gradle)
 
-| Команда | Описание |
+| Command | Description |
 | --- | --- |
-| `./gradlew build` | Сборка проекта |
-| `./gradlew bootRun` | Запуск приложения |
-| `./gradlew test` | Запуск тестов |
-| `./gradlew clean` | Очистка артефактов сборки |
+| `./gradlew build` | Build the project |
+| `./gradlew bootRun` | Run the application |
+| `./gradlew test` | Run tests |
+| `./gradlew clean` | Clean build artifacts |
 
 ### Frontend (npm)
 
-| Команда | Описание |
+| Command | Description |
 | --- | --- |
-| `npm run dev` | Разработка с горячей перезагрузкой |
-| `npm run build` | Production сборка |
-| `npm run lint` | Проверка кода с ESLint |
-| `npm run format` | Форматирование кода Prettier |
-| `npm run preview` | Просмотр production сборки |
+| `npm run dev` | Development with hot reload |
+| `npm run build` | Production build |
+| `npm run lint` | Code check with ESLint |
+| `npm run format` | Code formatting with Prettier |
+| `npm run preview` | Preview production build |
 
-## API документация
+## API Documentation
 
-### О Backend
+### About the Backend
 
-Backend приложения — это **Headless REST API**, разработанный на Spring Boot 3. Он обеспечивает полный функционал игровой логики через HTTP endpoints.
+The backend is a **Headless REST API** built on Spring Boot 3. It provides full game logic and authentication functionality through HTTP endpoints.
 
-### Доступные ресурсы
+### Main Endpoints
 
-После запуска backend, полная документация API доступна в Swagger UI:
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/auth/signup` | Register a new user |
+| `POST` | `/auth/login` | Login (returns session cookie) |
+| `GET` | `/user/profile` | Current user profile |
+| `POST` | `/game?size=3` | Create a new game |
+| `POST` | `/game/{id}` | Make a move |
+| `GET` | `/game/{id}` | Get game status |
+| `GET` | `/game` | List all user's games |
 
-- **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-- **OpenAPI JSON:** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+### Available Resources
 
-Вы можете тестировать все API endpoints прямо из Swagger интерфейса!
+After starting the backend, full API documentation is available in Swagger UI:
 
-## Архитектура
+- **Swagger UI:** [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
+- **OpenAPI JSON:** [http://localhost:8081/v3/api-docs](http://localhost:8081/v3/api-docs)
 
-### Backend архитектура (слои)
+You can test all API endpoints directly from the Swagger interface!
+
+## Architecture
+
+### Backend Architecture (Layers)
 
 ```text
 ┌─────────────────────────────────────────┐
 │       Web Layer (Controller)            │
-│     Обработка HTTP запросов             │
+│     HTTP Request Processing             │
+│     AuthController, GameController      │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
 │      Domain Layer (Service)             │
-│     Бизнес-логика приложения            │
+│     Application Business Logic          │
+│     AuthService, GameService, UserService
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
 │    Datasource Layer (Repository)        │
-│   Работа с хранилищем данных            │
+│   PostgreSQL Integration (JPA/Hibernate)│
 └─────────────────────────────────────────┘
 ```
 
-### Компоненты
+### Components
 
-- **Web Layer**: REST контроллеры, DTO модели, мапперы
-- **Domain Layer**: Бизнес-логика, entity модели, интерфейсы репозитория
-- **Datasource Layer**: Реализация репозитория, работа с памятью
-- **DI Configuration**: Spring конфигурация бинов
+- **Web Layer**: REST controllers, DTO models, mappers, authentication filters
+- **Domain Layer**: Business logic, entity models, repository interfaces, services
+- **Datasource Layer**: JPA repositories, entity mappers, PostgreSQL
+- **DI Configuration**: Spring bean configuration, Security configuration
 
-### Frontend архитектура
+### Frontend Architecture
 
-- **React Components**: Функциональные компоненты с hooks
-- **Custom Hooks**: Переиспользуемая логика (useGame)
-- **TypeScript Interfaces**: Строгая типизация
-- **Vite**: Быстрая разработка и оптимизированная сборка
+- **React Components**: Functional components (LoginForm, RegisterForm, GameModeSelection, UserProfile)
+- **Context API**: AuthContext for authentication state management
+- **Custom Hooks**: Reusable logic (useGame)
+- **TypeScript Interfaces**: Strict typing
+- **Vite**: Fast development and optimized builds
 
-## Зависимости
+## Dependencies
 
 ### Backend
 
 - **Java 18**
-- **Spring Boot 3.2.2**
-- **SpringDoc OpenAPI 2.3.0**
+- **Spring Boot 3.3.4**
+- **SpringDoc OpenAPI 2.6.0**
+- **Spring Security** — Authentication and basic auth
+- **Spring Data JPA** — Database access
+- **PostgreSQL** — Primary database
+- **H2** — Test database
 
 ### Frontend
 
 - **React 19.2.0**
 - **TypeScript 5.9.3**
 - **Vite 7.2.4**
-- **ESLint** - Проверка кода
-- **Prettier** - Форматирование кода
+- **ESLint** — Code quality
+- **Prettier** — Code formatting

@@ -3,13 +3,21 @@ package org.example.web.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.domain.exception.DuplicateUserException;
+import org.example.domain.model.RegistrationCommand;
+import org.example.domain.model.User;
 import org.example.domain.service.AuthService;
+import org.example.domain.service.UserService;
 import org.example.web.model.SignUpRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -22,6 +30,7 @@ import java.util.UUID;
 public class AuthController {
 
     private final AuthService authService;
+    private final UserService userService;
 
     /**
      * Конструктор для инициализации контроллера.
@@ -31,8 +40,9 @@ public class AuthController {
      *
      * @param authService сервис для обработки авторизации.
      */
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, UserService userService) {
         this.authService = authService;
+        this.userService = userService;
     }
 
     /**
@@ -44,10 +54,19 @@ public class AuthController {
     @PostMapping("/signup")
     @Operation(summary = "Регистрация пользователя", description = "Создает новую учетную запись пользователя")
     @ApiResponse(responseCode = "201", description = "Пользователь успешно зарегистрирован")
-    @ApiResponse(responseCode = "400", description = "Пользователь с таким логином уже существует")
-    public ResponseEntity<Map<String, Boolean>> signUp(@RequestBody SignUpRequest request) {
-        boolean result = authService.signUp(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", result));
+    @ApiResponse(responseCode = "409", description = "Логин уже занят")
+    public ResponseEntity<Map<String, Object>> signUp(@RequestBody SignUpRequest request) {
+        try {
+            RegistrationCommand command = new RegistrationCommand(request.login(), request.password());
+            boolean result = authService.signUp(command);
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", result));
+        } catch (DuplicateUserException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Login already in use"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Invalid request"));
+        }
     }
 
     /**
@@ -77,6 +96,31 @@ public class AuthController {
             return ResponseEntity.ok(Map.of("userId", userId));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    /**
+     * Получает информацию о пользователе по UUID.
+     *
+     * @param id UUID пользователя.
+     * @return ResponseEntity с информацией о пользователе.
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or #id.toString() == authentication.principal.username")
+    @Operation(summary = "Получить информацию о пользователе", description = "Возвращает информацию о пользователе по его UUID")
+    @ApiResponse(responseCode = "200", description = "Пользователь найден")
+    @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    @ApiResponse(responseCode = "403", description = "Нет доступа к профилю другого пользователя")
+    public ResponseEntity<Map<String, Object>> getUserById(@PathVariable UUID id) {
+        Optional<User> userOptional = userService.findById(id);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", user.id());
+            userInfo.put("login", user.login());
+            return ResponseEntity.ok(userInfo);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 }

@@ -1,5 +1,6 @@
 package org.example.domain.model;
 
+import org.example.domain.exception.InvalidMoveException;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,10 +32,10 @@ class GameMapTest {
     void setCellValue_ShouldThrowException_WhenCoordinatesOutOfBounds() {
         GameMap gameMap = new GameMap(3);
 
-        assertThrows(IllegalArgumentException.class, () -> gameMap.setCellValue(-1, 0, CellType.CROSS));
-        assertThrows(IllegalArgumentException.class, () -> gameMap.setCellValue(3, 3, CellType.CROSS));
-        assertThrows(IllegalArgumentException.class, () -> gameMap.setCellValue(0, 3, CellType.CROSS));
-        assertThrows(IllegalArgumentException.class, () -> gameMap.setCellValue(0, -1, CellType.CROSS));
+        assertThrows(InvalidMoveException.class, () -> gameMap.setCellValue(-1, 0, CellType.CROSS));
+        assertThrows(InvalidMoveException.class, () -> gameMap.setCellValue(3, 3, CellType.CROSS));
+        assertThrows(InvalidMoveException.class, () -> gameMap.setCellValue(0, 3, CellType.CROSS));
+        assertThrows(InvalidMoveException.class, () -> gameMap.setCellValue(0, -1, CellType.CROSS));
     }
 
     @Test

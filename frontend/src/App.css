@@ -102,16 +102,35 @@
 .status-panel {
   margin-top: 2rem;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .status-badge {
   padding: 8px 0;
   font-weight: 500;
-  margin-bottom: 1rem;
   color: #b0b0b0;
   font-size: 0.95rem;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+}
+
+.status-panel .btn {
+  margin: 0;
+}
+
+.check-opponent-btn {
+  background-color: rgba(255, 165, 0, 0.2);
+  color: #ffa500;
+  border: 1px solid #ffa500;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+}
+
+.check-opponent-btn:hover:not(:disabled) {
+  background-color: rgba(255, 165, 0, 0.3);
 }
 
 .error-message {
@@ -301,4 +320,260 @@
 
 .logout-btn:hover:not(:disabled) {
   background-color: rgba(255, 77, 77, 0.3);
+}
+
+/* Стили для экрана выбора режима игры */
+.game-mode-selection-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: #e0e0e0;
+  padding: 1rem;
+  background: var(--bg-color);
+}
+
+.game-mode-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 500px;
+}
+
+.mode-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.mode-btn {
+  width: 100%;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--panel-color);
+  color: #e0e0e0;
+}
+
+.mode-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.1);
+}
+
+.mode-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.ai-mode-btn {
+  background: linear-gradient(45deg, #ff6b6b, #ffa500);
+}
+
+.player-mode-btn {
+  background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+}
+
+.welcome-title {
+  font-size: var(--title-font);
+  margin-bottom: 1rem;
+  background: linear-gradient(45deg, var(--x-color), var(--o-color));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+}
+
+/* Стили для секции активных игр */
+.active-games-section {
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.active-games-section h2 {
+  font-size: 1.2rem;
+  color: #e0e0e0;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.active-games-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.active-game-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--cell-color);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.game-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: #b0b0b0;
+}
+
+.game-info span {
+  display: block;
+}
+
+.join-game-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.join-game-btn:hover:not(:disabled) {
+  filter: brightness(1.2);
+}
+
+.join-game-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* Profile button styles */
+.header-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.profile-btn {
+  padding: 8px 20px;
+  font-size: 0.9rem;
+  background-color: rgba(100, 108, 255, 0.2);
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+}
+
+.profile-btn:hover:not(:disabled) {
+  background-color: rgba(100, 108, 255, 0.3);
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background-color: var(--panel-color);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #b0b0b0;
+  font-size: 2rem;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+}
+
+.modal-content h2 {
+  margin-bottom: 1.5rem;
+  color: #e0e0e0;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: var(--cell-color);
+  border-radius: 8px;
+}
+
+.profile-field strong {
+  color: var(--accent-color);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.profile-field span {
+  color: #e0e0e0;
+  font-size: 1.1rem;
+  word-break: break-all;
 }

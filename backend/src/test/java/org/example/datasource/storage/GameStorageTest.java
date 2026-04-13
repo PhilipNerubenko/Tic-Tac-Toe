@@ -23,7 +23,11 @@ class JpaGameRepositoryTest {
     @Test
     void save_ShouldSaveEntity() {
         UUID id = UUID.randomUUID();
-        GameSessionEntity entity = new GameSessionEntity(id, new GameMapEntity(3), GameStatusEntity.PLAYING);
+        UUID playerX = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
+        GameMapEntity map = new GameMapEntity(3);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSessionEntity entity = new GameSessionEntity(id, map, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         when(jpaGameRepository.save(entity)).thenReturn(entity);
         when(jpaGameRepository.findById(id)).thenReturn(Optional.of(entity));
@@ -36,7 +40,11 @@ class JpaGameRepositoryTest {
     @Test
     void removeById_ShouldRemoveEntity() {
         UUID id = UUID.randomUUID();
-        GameSessionEntity entity = new GameSessionEntity(id, new GameMapEntity(3), GameStatusEntity.PLAYING);
+        UUID playerX = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
+        GameMapEntity map = new GameMapEntity(3);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSessionEntity entity = new GameSessionEntity(id, map, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         when(jpaGameRepository.save(entity)).thenReturn(entity);
         when(jpaGameRepository.findById(id)).thenReturn(Optional.of(entity));

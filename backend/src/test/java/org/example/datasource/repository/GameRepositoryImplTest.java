@@ -3,6 +3,7 @@ package org.example.datasource.repository;
 import org.example.datasource.model.GameMapEntity;
 import org.example.datasource.model.GameSessionEntity;
 import org.example.datasource.model.GameStatusEntity;
+import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
 import org.example.domain.model.GameStatus;
 import org.junit.jupiter.api.Test;
@@ -30,18 +31,22 @@ class GameRepositoryImplTest {
     @Test
     void findById_ShouldReturnEmptyOptional_WhenStorageReturnsNull() {
         UUID id = UUID.randomUUID();
-        when(jpaGameRepository.findById(id)).thenReturn(Optional.empty());
+        when(jpaGameRepository.findByIdReadOnly(id)).thenReturn(Optional.empty());
 
         Optional<GameSession> result = repository.findById(id);
 
         assertTrue(result.isEmpty());
-        verify(jpaGameRepository).findById(id);
+        verify(jpaGameRepository).findByIdReadOnly(id);
     }
 
     @Test
     void save_ShouldCallStorageSave() {
         UUID id = UUID.randomUUID();
-        GameSession session = new GameSession(id, null, GameStatus.PLAYING);
+        UUID playerX = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
+        GameMap map = new GameMap(3);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSession session = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         repository.save(session);
 
@@ -60,8 +65,11 @@ class GameRepositoryImplTest {
     @Test
     void findAll_ShouldReturnMappedMap() {
         UUID id = UUID.randomUUID();
+        UUID playerX = UUID.randomUUID();
+        UUID playerO = UUID.randomUUID();
         GameMapEntity mapEntity = new GameMapEntity(new int[][]{{0}}, 1);
-        GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYING);
+        java.time.Instant lastActiveAt = java.time.Instant.now();
+        GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
 
         when(jpaGameRepository.findAll()).thenReturn(java.util.List.of(entity));
 
@@ -70,7 +78,7 @@ class GameRepositoryImplTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertTrue(result.containsKey(id));
-        assertEquals(GameStatus.PLAYING, result.get(id).getStatus());
+        assertEquals(GameStatus.PLAYER_TURN, result.get(id).getStatus());
 
         verify(jpaGameRepository).findAll();
     }

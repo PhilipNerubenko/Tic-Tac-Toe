@@ -4,6 +4,8 @@ import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
 import org.example.domain.model.GameStatus;
 
+import java.util.UUID;
+
 /**
  * Интерфейс игрового сервиса, определяющий правила и механику "Крестиков-ноликов".
  * <p>
@@ -39,7 +41,31 @@ public interface GameService {
      * для выявления победителя, а также проверяет поле на наличие ничьей.
      *
      * @param gameMapEntity состояние поля для анализа.
-     * @return {@link GameStatus} (PLAYING, CROSS_WIN, ZERO_WIN или DRAW).
+     * @return {@link GameStatus} (VICTORY, DRAW или PLAYER_TURN).
      */
     GameStatus checkGameStatus(GameMap gameMapEntity);
+
+    GameSession executeTurn(UUID id, GameSession userMove, UUID authenticatedUserId);
+
+    GameSession createGame(int size, UUID creatorId, boolean vsAi);
+
+    GameSession joinPlayer(UUID id, UUID guestId);
+    
+    java.util.Map<UUID, GameSession> getActiveGames();
+    
+    java.util.Optional<GameSession> findById(UUID id);
+    
+    GameSession findGameForUser(UUID gameId, UUID userId);
+    
+    /**
+     * Проверяет, покинул ли один из игроков игру.
+     * Если игрок не активен более заданного времени (timeoutSeconds),
+     * игра завершается с статусом OPPONENT_LEFT.
+     *
+     * @param gameId ID игры
+     * @param userId ID пользователя, который проверяет статус
+     * @param timeoutSeconds время в секундах, после которого игрок считается покинувшим
+     * @return обновленная сессия с новым статусом, если игрок покинул
+     */
+    GameSession checkOpponentLeft(UUID gameId, UUID userId, long timeoutSeconds);
 }

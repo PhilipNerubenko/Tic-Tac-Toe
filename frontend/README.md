@@ -1,9 +1,11 @@
 # Tic-Tac-Toe Frontend
 
-A modern React + TypeScript + Vite frontend for the Tic-Tac-Toe game with AI opponent.
+A modern React + TypeScript + Vite frontend for the Tic-Tac-Toe game with authentication, user profiles, and AI opponent.
 
 ## 🚀 Features
 
+- **Authentication System**: User registration, login, and basic auth management via AuthContext
+- **User Profiles**: View player statistics and account information
 - **Dynamic Board Size**: Supports game boards of any size (not limited to 3x3)
 - **Real-time Game Updates**: Instant feedback on moves with loading states
 - **Error Handling**: Robust error handling with automatic retry logic
@@ -58,21 +60,35 @@ npm run preview
 
 ```
 src/
+├── App.tsx             # Main app component with routing and game logic
+├── App.css             # App styling and theme variables
+├── main.tsx            # Entry point
+├── index.css           # Global styles
+├── components/         # Reusable UI components
+│   ├── LoginForm.tsx           # User login form
+│   ├── RegisterForm.tsx        # User registration form
+│   ├── GameModeSelection.tsx   # Game mode selection screen
+│   └── UserProfile.tsx         # User profile and statistics display
+├── contexts/           # React Context providers
+│   └── AuthContext.tsx # Authentication state management
 ├── hooks/              # Custom React hooks
 │   └── useGame.ts      # Game logic hook with retry and validation
-├── interfaces/         # TypeScript interfaces
-│   └── game.ts         # Game data types and status
-├── App.tsx             # Main app component
-├── App.css             # App styling
-├── main.tsx            # Entry point
-└── index.css           # Global styles
+└── interfaces/         # TypeScript interfaces
+    └── game.ts         # Game data types and status
 ```
 
 ## 🎮 How It Works
 
+### Authentication Flow
+
+1. **Register**: New users create an account via RegisterForm
+2. **Login**: Existing users authenticate via LoginForm
+3. **Token Storage**: Basic auth credentials are sent with each request
+4. **Profile Access**: Authenticated users can view their profile
+
 ### Game Flow
 
-1. **Initialize**: On app mount, `useGame` hook connects to the backend and starts a new game
+1. **Initialize**: After login, `useGame` hook connects to the backend and starts a new game
 2. **Player Move**: Click on an empty cell to make your move (X)
 3. **AI Response**: Backend processes the move and returns the AI's move (O)
 4. **Win/Draw**: Game ends when there's a winner or the board is full
@@ -83,6 +99,7 @@ src/
 - **Data Validation**: All responses from the server are validated before use
 - **Loading States**: Board is disabled when a move is being processed to prevent duplicate submissions
 - **Error Display**: Connection errors are shown to the user with helpful messages
+- **Auth Context**: Centralized authentication state management across all components
 
 ## 🔧 Configuration
 
@@ -103,10 +120,22 @@ server: {
 
 ### Backend API Endpoints
 
-- `POST /game` - Start a new game
-- `POST /game/:id` - Submit a move for game with given ID
+#### Authentication
 
-Expected response format:
+- `POST /auth/signup` — Register a new user
+- `POST /auth/login` — Login and receive session
+
+#### User
+
+- `GET /user/profile` — Get current user profile
+
+#### Game
+
+- `POST /game` — Start a new game
+- `POST /game/:id` — Submit a move for game with given ID
+- `GET /game/:id` — Get game status
+
+Expected game response format:
 
 ```json
 {
@@ -144,15 +173,24 @@ The frontend automatically supports any board size returned by the backend throu
 ### "Connection Error" message
 
 - Ensure Java backend is running on `http://localhost:8080`
-- Check that `/game` endpoints are accessible
+- Check that `/game` and `/auth` endpoints are accessible
 - See browser DevTools Console for detailed error messages
+
+### Authentication issues
+
+- Verify backend Spring Security is properly configured
+- Check CORS settings in SecurityConfig
+- Ensure Basic Auth credentials are being sent in Authorization header
 
 ### Board not loading
 
 - Check if backend is returning valid game data structure
 - Verify the proxy settings in `vite.config.ts`
 
-## 📝 Code Quality
+## Production Deployment
+
+To deploy the frontend to a production environment, you'll need to build the application using `npm run build` and serve the static assets using a web server like Nginx or Apache. Ensure that the backend API URL is correctly configured in your environment variables. You may also want to configure a Content Delivery Network (CDN) to improve performance and reduce latency for users around the world.
+
 
 This project uses:
 

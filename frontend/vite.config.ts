@@ -6,7 +6,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/game': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
+      '/auth': {
+        target: 'http://localhost:8081',
         changeOrigin: true,
       },
     },

@@ -1,6 +1,6 @@
 package org.example.domain.service;
 
-import org.example.web.model.SignUpRequest;
+import org.example.domain.model.RegistrationCommand;
 
 import java.util.UUID;
 
@@ -14,11 +14,11 @@ public interface AuthService {
     /**
      * Регистрирует нового пользователя в системе.
      *
-     * @param request запрос на регистрацию с логином и паролем.
+     * @param command команда на регистрацию с логином и паролем.
      * @return {@code true}, если регистрация прошла успешно.
      * @throws IllegalArgumentException если пользователь с таким логином уже существует.
      */
-    boolean signUp(SignUpRequest request);
+    boolean signUp(RegistrationCommand command);
 
     /**
      * Аутентифицирует пользователя по логину и паролю.
