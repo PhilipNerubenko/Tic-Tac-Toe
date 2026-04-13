@@ -18,7 +18,7 @@
 ### Предварительные требования
 
 - Node.js 18+
-- Запущенный Java-backend на `http://localhost:8080`
+- Запущенный Java-backend на `http://localhost:8081`
 
 ## 📝 Production Deployment
 

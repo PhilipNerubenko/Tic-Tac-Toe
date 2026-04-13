@@ -159,7 +159,7 @@ FRONTEND_EXTERNAL_PORT=3001
 - **Start the application**
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
 - **Open the application**
@@ -171,7 +171,7 @@ docker-compose up --build -d
 - **Stop the application**
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Option 2 — Local Development

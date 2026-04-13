@@ -264,7 +264,7 @@ docker run -p 8081:8081 \
 
 Из корня проекта:
 ```bash
-docker-compose up backend-api
+docker compose up backend-api
 ```
 
 Frontend автоматически подключится к API по адресу `http://localhost:8081`
