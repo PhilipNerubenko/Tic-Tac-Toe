@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
+import org.example.domain.model.JwtAuthentication;
 import org.example.domain.model.User;
 import org.example.domain.service.GameService;
 import org.example.domain.service.UserService;
@@ -19,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -175,5 +177,25 @@ public class GameController {
         User user = userService.findByLogin(login)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Пользователь не найден"));
         return user.id();
+    }
+
+    @GetMapping("/history")
+    @Operation(summary = "Получить историю игр", description = "Возвращает список всех завершенных игр текущего пользователя")
+    @ApiResponse(responseCode = "200", description = "История игр успешно получена")
+    public ResponseEntity<List<GameSessionDTO>> getMyGamesHistory() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!(auth instanceof JwtAuthentication jwtAuth)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный тип аутентификации");
+        }
+
+        UUID currentUserUuid = jwtAuth.getPrincipal();
+
+        List<GameSessionDTO> history = gameService.getGameHistory(currentUserUuid)
+                .stream()
+                .map(GameMapperDTO::toDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(history);
     }
 }

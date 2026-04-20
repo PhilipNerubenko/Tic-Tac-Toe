@@ -6,6 +6,7 @@ import org.example.domain.model.GameSession;
 import org.example.domain.repository.GameRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -97,5 +98,14 @@ public class GameRepositoryImpl implements GameRepository {
         return StreamSupport.stream(entities.spliterator(), false)
                 .map(GameMapper::toDomain)
                 .collect(Collectors.toMap(GameSession::getId, session -> session));
+    }
+
+    @Override
+    public List<GameSession> findAllFinishedByPlayerUuid(UUID userUuid) {
+        List<GameSessionEntity> entities = jpaGameRepository.findAllFinishedByPlayerUuid(userUuid);
+
+        return entities.stream()
+                .map(GameMapper::toDomain)
+                .toList();
     }
 }

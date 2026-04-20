@@ -44,7 +44,8 @@ public class GameMapper {
                 entity.getPlayerO(),
                 entity.getCurrentPlayer(),
                 entity.getWinner(),
-                entity.getLastActiveAt()
+                entity.getLastActiveAt(),
+                entity.getCreatedAt()
         );
     }
 
@@ -65,7 +66,8 @@ public class GameMapper {
                 domain.getPlayerO(),
                 domain.getCurrentPlayer(),
                 domain.getWinner(),
-                domain.getLastActiveAt()
+                domain.getLastActiveAt(),
+                domain.getCreatedAt()
         );
         
         return entity;
