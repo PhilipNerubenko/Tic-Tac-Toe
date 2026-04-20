@@ -106,7 +106,7 @@ public class AuthController {
      * @return ResponseEntity с информацией о пользователе.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or #id.toString() == authentication.principal.username")
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal")
     @Operation(summary = "Получить информацию о пользователе", description = "Возвращает информацию о пользователе по его UUID")
     @ApiResponse(responseCode = "200", description = "Пользователь найден")
     @ApiResponse(responseCode = "404", description = "Пользователь не найден")
