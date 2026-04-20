@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.domain.exception.DuplicateUserException;
+import org.example.domain.model.JwtAuthentication;
 import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
 import org.example.domain.service.AuthService;
@@ -15,6 +16,7 @@ import org.example.web.model.SignUpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -137,6 +139,35 @@ public class AuthController {
             return ResponseEntity.ok(responseBody);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    /**
+     * Получает информацию о пользователе по accessToken.
+     *
+     * @return ResponseEntity с информацией о пользователе.
+     */
+    @GetMapping("/me")
+    @Operation(summary = "Получить информацию о текущем пользователе", description = "Возвращает информацию о пользователе по его accessToken")
+    @ApiResponse(responseCode = "200", description = "Пользователь найден")
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован")
+    @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    public ResponseEntity<Map<String, Object>> getUserByAccessToken() {
+        JwtAuthentication auth = (JwtAuthentication) SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        UUID userId = auth.getPrincipal();
+        Optional<User> userOptional = userService.findById(userId);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", user.id());
+            userInfo.put("login", user.login());
+            return ResponseEntity.ok(userInfo);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 
