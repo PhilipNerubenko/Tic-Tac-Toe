@@ -1,8 +1,9 @@
 package org.example.domain.service;
 
+import org.example.domain.model.JwtAuthentication;
 import org.example.domain.model.RegistrationCommand;
-
-import java.util.UUID;
+import org.example.web.model.JwtRequest;
+import org.example.web.model.JwtResponse;
 
 /**
  * Интерфейс сервиса авторизации.
@@ -21,12 +22,38 @@ public interface AuthService {
     boolean signUp(RegistrationCommand command);
 
     /**
-     * Аутентифицирует пользователя по логину и паролю.
+     * Аутентифицирует пользователя и возвращает JWT-токены.
      *
-     * @param login    уникальное имя пользователя.
-     * @param password пароль пользователя.
-     * @return UUID аутентифицированного пользователя.
+     * @param request запрос с логином и паролем.
+     * @return JWT-токены (access и refresh).
      * @throws IllegalArgumentException если логин или пароль неверны.
      */
-    UUID signIn(String login, String password);
+    JwtResponse signIn(JwtRequest request);
+
+    /**
+     * Обновляет access-токен по refresh-токену.
+     *
+     * @param refreshToken токен обновления.
+     * @return новые JWT-токены (access и refresh).
+     * @throws IllegalArgumentException если refresh-токен невалиден.
+     */
+    JwtResponse refreshAccessToken(String refreshToken);
+
+    /**
+     * Обновляет refresh-токен по текущему refresh-токену.
+     *
+     * @param refreshToken текущий токен обновления.
+     * @return новые JWT-токены (access и refresh).
+     * @throws IllegalArgumentException если refresh-токен невалиден.
+     */
+    JwtResponse refreshRefreshToken(String refreshToken);
+
+    /**
+     * Получает объект аутентификации по access-токену.
+     *
+     * @param accessToken токен доступа.
+     * @return объект JwtAuthentication.
+     * @throws IllegalArgumentException если токен невалиден.
+     */
+    JwtAuthentication getAuthentication(String accessToken);
 }
