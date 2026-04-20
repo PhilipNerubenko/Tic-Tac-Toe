@@ -76,21 +76,11 @@ class GameConfigTest {
     void authService_ShouldCreateAuthServiceImpl() {
         GameConfig config = new GameConfig();
         UserService userService = Mockito.mock(UserService.class);
+        JwtProvider jwtProvider = Mockito.mock(JwtProvider.class);
 
-        AuthService service = config.authService(userService);
+        AuthService service = config.authService(userService, jwtProvider);
 
         assertNotNull(service);
         assertInstanceOf(AuthServiceImpl.class, service);
-    }
-
-    @Test
-    void authFilter_ShouldCreateAuthFilter() {
-        GameConfig config = new GameConfig();
-        UserService userService = Mockito.mock(UserService.class);
-
-        AuthFilter filter = config.authFilter(userService);
-
-        assertNotNull(filter);
-        assertInstanceOf(AuthFilter.class, filter);
     }
 }

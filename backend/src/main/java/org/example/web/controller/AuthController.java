@@ -8,9 +8,10 @@ import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
 import org.example.domain.service.AuthService;
 import org.example.domain.service.UserService;
+import org.example.web.model.JwtRequest;
+import org.example.web.model.JwtResponse;
 import org.example.web.model.SignUpRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -73,15 +74,14 @@ public class AuthController {
      * Аутентифицирует пользователя по логину и паролю.
      *
      * @param authorization заголовок Authorization с base64(login:password).
-     * @return ResponseEntity с UUID аутентифицированного пользователя.
+     * @return ResponseEntity с JWT-токенами.
      */
     @PostMapping("/signin")
-    @Operation(summary = "Авторизация пользователя", description = "Аутентифицирует пользователя и возвращает его UUID")
+    @Operation(summary = "Авторизация пользователя", description = "Аутентифицирует пользователя и возвращает JWT-токены")
     @ApiResponse(responseCode = "200", description = "Пользователь успешно аутентифицирован")
     @ApiResponse(responseCode = "401", description = "Неверный логин или пароль")
-    public ResponseEntity<Map<String, UUID>> signIn(@RequestHeader("Authorization") String authorization) {
+    public ResponseEntity<Map<String, String>> signIn(@RequestHeader("Authorization") String authorization) {
         try {
-            // Декодируем base64(login:password)
             String decoded = new String(java.util.Base64.getDecoder().decode(authorization.replace("Basic ", "")));
             String[] credentials = decoded.split(":", 2);
 
@@ -92,8 +92,12 @@ public class AuthController {
             String login = credentials[0];
             String password = credentials[1];
 
-            UUID userId = authService.signIn(login, password);
-            return ResponseEntity.ok(Map.of("userId", userId));
+            JwtResponse jwtResponse = authService.signIn(new JwtRequest(login, password));
+            Map<String, String> responseBody = new HashMap<>();
+            responseBody.put("type", jwtResponse.type());
+            responseBody.put("accessToken", jwtResponse.accessToken());
+            responseBody.put("refreshToken", jwtResponse.refreshToken());
+            return ResponseEntity.ok(responseBody);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
