@@ -10,6 +10,7 @@ import org.example.domain.service.AuthService;
 import org.example.domain.service.UserService;
 import org.example.web.model.JwtRequest;
 import org.example.web.model.JwtResponse;
+import org.example.web.model.RefreshJwtRequest;
 import org.example.web.model.SignUpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -73,26 +74,62 @@ public class AuthController {
     /**
      * Аутентифицирует пользователя по логину и паролю.
      *
-     * @param authorization заголовок Authorization с base64(login:password).
+     * @param request запрос с логином и паролем.
      * @return ResponseEntity с JWT-токенами.
      */
     @PostMapping("/signin")
     @Operation(summary = "Авторизация пользователя", description = "Аутентифицирует пользователя и возвращает JWT-токены")
     @ApiResponse(responseCode = "200", description = "Пользователь успешно аутентифицирован")
     @ApiResponse(responseCode = "401", description = "Неверный логин или пароль")
-    public ResponseEntity<Map<String, String>> signIn(@RequestHeader("Authorization") String authorization) {
+    public ResponseEntity<Map<String, String>> signIn(@RequestBody JwtRequest request) {
         try {
-            String decoded = new String(java.util.Base64.getDecoder().decode(authorization.replace("Basic ", "")));
-            String[] credentials = decoded.split(":", 2);
+            JwtResponse jwtResponse = authService.signIn(request);
+            Map<String, String> responseBody = new HashMap<>();
+            responseBody.put("type", jwtResponse.type());
+            responseBody.put("accessToken", jwtResponse.accessToken());
+            responseBody.put("refreshToken", jwtResponse.refreshToken());
+            return ResponseEntity.ok(responseBody);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
 
-            if (credentials.length != 2) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
+    /**
+     * Обновляет access-токен по refresh-токену.
+     *
+     * @param request запрос с refresh-токеном.
+     * @return ResponseEntity с новыми JWT-токенами.
+     */
+    @PostMapping("/refresh/access")
+    @Operation(summary = "Обновление accessToken", description = "Обновляет access-токен по refresh-токену")
+    @ApiResponse(responseCode = "200", description = "Токены успешно обновлены")
+    @ApiResponse(responseCode = "401", description = "Невалидный refresh-токен")
+    public ResponseEntity<Map<String, String>> refreshAccessToken(@RequestBody RefreshJwtRequest request) {
+        try {
+            JwtResponse jwtResponse = authService.refreshAccessToken(request.refreshToken());
+            Map<String, String> responseBody = new HashMap<>();
+            responseBody.put("type", jwtResponse.type());
+            responseBody.put("accessToken", jwtResponse.accessToken());
+            responseBody.put("refreshToken", jwtResponse.refreshToken());
+            return ResponseEntity.ok(responseBody);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
 
-            String login = credentials[0];
-            String password = credentials[1];
-
-            JwtResponse jwtResponse = authService.signIn(new JwtRequest(login, password));
+    /**
+     * Обновляет refresh-токен по текущему refresh-токену.
+     *
+     * @param request запрос с refresh-токеном.
+     * @return ResponseEntity с новыми JWT-токенами.
+     */
+    @PostMapping("/refresh/refresh")
+    @Operation(summary = "Обновление refreshToken", description = "Обновляет refresh-токен по текущему refresh-токену")
+    @ApiResponse(responseCode = "200", description = "Токены успешно обновлены")
+    @ApiResponse(responseCode = "401", description = "Невалидный refresh-токен")
+    public ResponseEntity<Map<String, String>> refreshRefreshToken(@RequestBody RefreshJwtRequest request) {
+        try {
+            JwtResponse jwtResponse = authService.refreshRefreshToken(request.refreshToken());
             Map<String, String> responseBody = new HashMap<>();
             responseBody.put("type", jwtResponse.type());
             responseBody.put("accessToken", jwtResponse.accessToken());
