@@ -3,10 +3,12 @@ package org.example.domain.service;
 import org.example.domain.exception.DuplicateUserException;
 import org.example.domain.model.CellType;
 import org.example.domain.model.User;
+import org.example.domain.model.UserRole;
 import org.example.domain.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,7 +51,7 @@ public class UserServiceImpl implements UserService {
             throw new DuplicateUserException("Login already in use");
         }
 
-        User user = new User(UUID.randomUUID(), login, passwordEncoder.encode(password), CellType.CROSS);
+        User user = new User(UUID.randomUUID(), login, passwordEncoder.encode(password), CellType.CROSS, Collections.singletonList(UserRole.USER));
         userRepository.save(user);
         return user;
     }

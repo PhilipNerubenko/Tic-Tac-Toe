@@ -4,11 +4,13 @@ import org.example.domain.exception.DuplicateUserException;
 import org.example.domain.model.CellType;
 import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
+import org.example.domain.model.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,7 +40,7 @@ class AuthServiceTest {
         RegistrationCommand command = new RegistrationCommand("testuser", "testpassword");
 
         when(userService.register(anyString(), anyString())).thenReturn(
-                new User(UUID.randomUUID(), "testuser", "testpassword", CellType.CROSS)
+                new User(UUID.randomUUID(), "testuser", "testpassword", CellType.CROSS, Collections.singletonList(UserRole.USER))
         );
 
         boolean result = authService.signUp(command);
@@ -64,7 +66,7 @@ class AuthServiceTest {
         String login = "testuser";
         String password = "testpassword";
         UUID expectedUserId = UUID.randomUUID();
-        User user = new User(expectedUserId, login, password, CellType.CROSS);
+        User user = new User(expectedUserId, login, password, CellType.CROSS, Collections.singletonList(UserRole.USER));
 
         when(userService.validateCredentials(login, password)).thenReturn(true);
         when(userService.findByLogin(login)).thenReturn(Optional.of(user));

@@ -3,6 +3,7 @@ package org.example.web.controller;
 import org.example.domain.model.CellType;
 import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
+import org.example.domain.model.UserRole;
 import org.example.domain.service.AuthService;
 import org.example.domain.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -79,7 +81,7 @@ class AuthControllerTest {
     @Test
     void getUserById_ShouldReturnUser_WhenUserExists() throws Exception {
         UUID userId = UUID.randomUUID();
-        User user = new User(userId, "testuser", "testpassword", CellType.CROSS);
+        User user = new User(userId, "testuser", "testpassword", CellType.CROSS, Collections.singletonList(UserRole.USER));
 
         // Мокаем поиск пользователя - Security отключён в @WebMvcTest
         when(userService.findById(userId)).thenReturn(Optional.of(user));

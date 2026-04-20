@@ -3,10 +3,12 @@ package org.example.datasource.mapper;
 import org.example.datasource.model.UserEntity;
 import org.example.domain.model.CellType;
 import org.example.domain.model.User;
+import org.example.domain.model.UserRole;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,7 +51,7 @@ class UserMapperTest {
     @Test
     void toEntity_ShouldConvertDomainToEntity() {
         UUID id = UUID.randomUUID();
-        User domain = new User(id, "testuser", "testpass", CellType.CROSS);
+        User domain = new User(id, "testuser", "testpass", CellType.CROSS, Collections.singletonList(UserRole.USER));
 
         UserEntity entity = UserMapper.toEntity(domain);
 

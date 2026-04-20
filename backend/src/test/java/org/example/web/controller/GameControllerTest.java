@@ -5,6 +5,7 @@ import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
 import org.example.domain.model.GameStatus;
 import org.example.domain.model.User;
+import org.example.domain.model.UserRole;
 import org.example.domain.repository.GameRepository;
 import org.example.domain.service.GameService;
 import org.example.domain.service.UserService;
@@ -20,6 +21,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -100,7 +102,7 @@ class GameControllerTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", "testpassword");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        User user = new User(playerX, "testuser", "testpassword", CellType.CROSS);
+        User user = new User(playerX, "testuser", "testpassword", CellType.CROSS, Collections.singletonList(UserRole.USER));
         when(userService.findByLogin("testuser")).thenReturn(Optional.of(user));
 
         String jsonPayload = """
@@ -131,7 +133,7 @@ class GameControllerTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", "testpassword");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        User user = new User(playerX, "testuser", "testpassword", CellType.CROSS);
+        User user = new User(playerX, "testuser", "testpassword", CellType.CROSS, Collections.singletonList(UserRole.USER));
         when(userService.findByLogin("testuser")).thenReturn(Optional.of(user));
 
         String jsonPayload = """
@@ -178,7 +180,7 @@ class GameControllerTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", "testpassword");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        User user = new User(playerX, "testuser", "testpassword", CellType.CROSS);
+        User user = new User(playerX, "testuser", "testpassword", CellType.CROSS, Collections.singletonList(UserRole.USER));
         when(userService.findByLogin("testuser")).thenReturn(Optional.of(user));
 
         String jsonPayload = """
@@ -212,7 +214,7 @@ class GameControllerTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("user2", "pass2");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        User user = new User(playerO, "user2", "pass2", CellType.ZERO);
+        User user = new User(playerO, "user2", "pass2", CellType.ZERO, Collections.singletonList(UserRole.USER));
         when(userService.findByLogin("user2")).thenReturn(Optional.of(user));
 
         String jsonPayload = """
@@ -243,7 +245,7 @@ class GameControllerTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", "testpassword");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        User user = new User(playerX, "testuser", "testpassword", CellType.CROSS);
+        User user = new User(playerX, "testuser", "testpassword", CellType.CROSS, Collections.singletonList(UserRole.USER));
         when(userService.findByLogin("testuser")).thenReturn(Optional.of(user));
 
         mockMvc.perform(get("/game/" + sessionId))
@@ -265,7 +267,7 @@ class GameControllerTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", "testpassword");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        User user = new User(guestId, "testuser", "testpassword", CellType.ZERO);
+        User user = new User(guestId, "testuser", "testpassword", CellType.ZERO, Collections.singletonList(UserRole.USER));
         when(userService.findByLogin("testuser")).thenReturn(Optional.of(user));
 
         mockMvc.perform(post("/game/" + sessionId + "/join")
@@ -302,7 +304,7 @@ class GameControllerTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken("testuser", "testpassword");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        User user = new User(playerX, "testuser", "testpassword", CellType.CROSS);
+        User user = new User(playerX, "testuser", "testpassword", CellType.CROSS, Collections.singletonList(UserRole.USER));
         when(userService.findByLogin("testuser")).thenReturn(Optional.of(user));
 
         mockMvc.perform(post("/game/" + sessionId + "/check-opponent-left")

@@ -4,9 +4,11 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.domain.model.User;
 import org.example.domain.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.GenericFilterBean;
@@ -14,6 +16,9 @@ import org.springframework.web.filter.GenericFilterBean;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class AuthFilter extends GenericFilterBean {
 
@@ -43,8 +48,15 @@ public class AuthFilter extends GenericFilterBean {
                     String password = credentials[1];
 
                     if (userService.validateCredentials(login, password)) {
+                        Optional<User> userOpt = userService.findByLogin(login);
+                        List<GrantedAuthority> authorities = userOpt.map(user -> 
+                                user.roles().stream()
+                                    .<GrantedAuthority>map(role -> new SimpleGrantedAuthority(role.getAuthority()))
+                                    .collect(Collectors.toList())
+                        ).orElse(Collections.emptyList());
+                        
                         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                                login, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                                login, null, authorities
                         );
                         SecurityContextHolder.getContext().setAuthentication(auth);
                         chain.doFilter(request, response);
