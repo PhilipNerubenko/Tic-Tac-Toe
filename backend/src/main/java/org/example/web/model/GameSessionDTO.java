@@ -1,5 +1,6 @@
 package org.example.web.model;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -31,6 +32,9 @@ public class GameSessionDTO {
     /** Время последнего действия игрока */
     private java.time.Instant lastActiveAt;
 
+        /** Дата создания игры */
+    private LocalDateTime createdAt;
+
     /**
      * Конструктор без параметров.
      * Необходим для корректной работы десериализаторов JSON (например, Jackson).
@@ -48,8 +52,9 @@ public class GameSessionDTO {
      * @param currentPlayer ID игрока, который должен ходить.
      * @param winner        ID победителя (может быть null).
      * @param lastActiveAt  время последнего действия игрока (может быть null).
+     * @param createdAt     дата создания игры.
      */
-    public GameSessionDTO(UUID id, GameMapDTO gameMap, GameStatusDTO status, UUID playerX, UUID playerO, UUID currentPlayer, UUID winner, java.time.Instant lastActiveAt) {
+    public GameSessionDTO(UUID id, GameMapDTO gameMap, GameStatusDTO status, UUID playerX, UUID playerO, UUID currentPlayer, UUID winner, java.time.Instant lastActiveAt, LocalDateTime createdAt) {
         this.id = id;
         this.gameMap = gameMap;
         this.status = status;
@@ -58,6 +63,7 @@ public class GameSessionDTO {
         this.currentPlayer = currentPlayer;
         this.winner = winner;
         this.lastActiveAt = lastActiveAt != null ? lastActiveAt : java.time.Instant.now();
+        this.createdAt = LocalDateTime.now();
     }
 
     /**
@@ -170,5 +176,21 @@ public class GameSessionDTO {
      */
     public void setLastActiveAt(java.time.Instant lastActiveAt) {
         this.lastActiveAt = lastActiveAt;
+    }
+
+    /**
+     * Возвращает дату создания игры.
+     * @return дата создания игры
+     */
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    /**
+     * Устанавливает дату создания игры.
+     * @param createdAt дата создания игры
+     */
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

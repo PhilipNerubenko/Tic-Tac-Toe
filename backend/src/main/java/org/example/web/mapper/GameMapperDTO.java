@@ -42,7 +42,8 @@ public class GameMapperDTO {
                 session.getPlayerO(),
                 session.getCurrentPlayer(),
                 session.getWinner(),
-                session.getLastActiveAt()
+                session.getLastActiveAt(),
+                session.getCreatedAt()
         );
     }
 
@@ -63,7 +64,8 @@ public class GameMapperDTO {
                 dto.getPlayerO(),
                 dto.getCurrentPlayer(),
                 dto.getWinner(),
-                dto.getLastActiveAt()
+                dto.getLastActiveAt(),
+                dto.getCreatedAt()
         );
     }
 
