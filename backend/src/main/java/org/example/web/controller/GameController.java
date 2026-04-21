@@ -3,6 +3,7 @@ package org.example.web.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/game")
+@SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Game Controller", description = "Управление игровыми сессиями и ходами ИИ")
 public class GameController {
 
@@ -59,11 +61,12 @@ public class GameController {
     @Operation(summary = "Создать новую игру", description = "Инициализирует пустое поле и сохраняет сессию")
     @ApiResponse(responseCode = "201", description = "Игра успешно создана")
     public ResponseEntity<GameSessionDTO> createGame(
-        @RequestParam UUID creatorId,
         @RequestParam(defaultValue = "true") boolean vsAi,
         @Parameter(description = "Размер квадратного поля") @RequestParam(defaultValue = "3") int size) {
 
-        GameSession newSession = gameService.createGame(size, creatorId, vsAi);
+        UUID authenticatedUserId = getAuthenticatedUserId();
+
+        GameSession newSession = gameService.createGame(size, authenticatedUserId, vsAi);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(GameMapperDTO.toDTO(newSession));
     }
@@ -170,14 +173,12 @@ public class GameController {
      */
     private UUID getAuthenticatedUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Не авторизован");
+
+        if (authentication instanceof JwtAuthentication jwtAuth) {
+            return jwtAuth.getPrincipal();
         }
 
-        String login = authentication.getName();
-        User user = userService.findByLogin(login)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Пользователь не найден"));
-        return user.id();
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный тип аутентификации");
     }
 
     @GetMapping("/history")

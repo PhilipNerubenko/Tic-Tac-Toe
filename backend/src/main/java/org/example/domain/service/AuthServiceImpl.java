@@ -1,5 +1,6 @@
 package org.example.domain.service;
 
+import io.jsonwebtoken.Claims;
 import org.example.domain.model.JwtAuthentication;
 import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
@@ -21,10 +22,12 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserService userService;
     private final JwtProvider jwtProvider;
+    private final JwtUtil jwtUtil;
 
-    public AuthServiceImpl(UserService userService, JwtProvider jwtProvider) {
+    public AuthServiceImpl(UserService userService, JwtProvider jwtProvider, JwtUtil jwtUtil) {
         this.userService = userService;
         this.jwtProvider = jwtProvider;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
@@ -68,15 +71,9 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Invalid access token");
         }
 
-        String userId = jwtProvider.getClaims(accessToken).getSubject();
-        User user = userService.findById(UUID.fromString(userId))
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Claims claims = jwtProvider.getClaims(accessToken);
 
-        Collection<? extends GrantedAuthority> authorities = user.roles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
-                .toList();
-
-        return new JwtAuthentication(user.id(), authorities, true);
+        return jwtUtil.createAuthentication(claims);
     }
 
     private User resolveUserFromRefreshToken(String refreshToken) {

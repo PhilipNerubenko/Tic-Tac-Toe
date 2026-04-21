@@ -77,8 +77,9 @@ class GameConfigTest {
         GameConfig config = new GameConfig();
         UserService userService = Mockito.mock(UserService.class);
         JwtProvider jwtProvider = Mockito.mock(JwtProvider.class);
+        JwtUtil jwtUtil = Mockito.mock(JwtUtil.class);
 
-        AuthService service = config.authService(userService, jwtProvider);
+        AuthService service = config.authService(userService, jwtProvider, jwtUtil);
 
         assertNotNull(service);
         assertInstanceOf(AuthServiceImpl.class, service);

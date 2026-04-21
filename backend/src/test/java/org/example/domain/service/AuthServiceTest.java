@@ -32,12 +32,15 @@ class AuthServiceTest {
     @Mock
     private JwtProvider jwtProvider;
 
+    @Mock
+    private JwtUtil jwtUtil;
+
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        authService = new AuthServiceImpl(userService, jwtProvider);
+        authService = new AuthServiceImpl(userService, jwtProvider, jwtUtil);
     }
 
     @Test
