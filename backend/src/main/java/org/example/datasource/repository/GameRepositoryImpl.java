@@ -3,6 +3,7 @@ package org.example.datasource.repository;
 import org.example.datasource.mapper.GameMapper;
 import org.example.datasource.model.GameSessionEntity;
 import org.example.domain.model.GameSession;
+import org.example.domain.model.PlayerStats;
 import org.example.domain.repository.GameRepository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,6 +85,19 @@ public class GameRepositoryImpl implements GameRepository {
     @Override
     public void deleteById(UUID id) {
         jpaGameRepository.deleteById(id);
+    }
+
+    @Override
+    public List<PlayerStats> findTopPlayers(int n) {
+        List<Object[]> results = jpaGameRepository.findTopLeadersNative(n);
+
+        return results.stream()
+                .map(row -> new PlayerStats(
+                        (UUID) row[0],
+                        (String) row[1],
+                        (Double) row[2]
+                ))
+                .toList();
     }
 
     /**

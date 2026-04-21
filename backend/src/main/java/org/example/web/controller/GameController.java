@@ -12,6 +12,7 @@ import org.example.domain.service.GameService;
 import org.example.domain.service.UserService;
 import org.example.web.mapper.GameMapperDTO;
 import org.example.web.model.GameSessionDTO;
+import org.example.web.model.LeaderboardResponseDTO;
 import org.example.web.model.MoveRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -197,5 +198,19 @@ public class GameController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/leaderboard")
+    @Operation(summary = "Таблица лидеров", description = "Топ N игроков по винрейту")
+    public ResponseEntity<List<LeaderboardResponseDTO>> getLeaderboard(@RequestParam(defaultValue = "10") int n) {
+        int limit = (n <= 0) ? 10 : Math.min(n, 100);
+        getAuthenticatedUserId();
+
+        List<LeaderboardResponseDTO> response = gameService.getLeaderboard(limit)
+                .stream()
+                .map(stats -> new LeaderboardResponseDTO(stats.userId(), stats.login(), stats.winRate()))
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 }

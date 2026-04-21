@@ -1,6 +1,7 @@
 package org.example.domain.repository;
 
 import org.example.domain.model.GameSession;
+import org.example.domain.model.PlayerStats;
 
 import java.util.List;
 import java.util.Map;
@@ -64,4 +65,11 @@ public interface GameRepository {
      * @param id уникальный идентификатор сессии для удаления.
      */
     void deleteById(UUID id);
+
+    /**
+     * Возвращает топ игроков по выигрышам
+     * @param n количество выводимых игроков
+     * @return Список игроков
+     */
+    List<PlayerStats> findTopPlayers(int n);
 }

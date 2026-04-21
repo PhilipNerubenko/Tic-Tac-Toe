@@ -5,10 +5,7 @@ import org.example.domain.exception.GameNotFoundException;
 import org.example.domain.exception.IntegrityViolationException;
 import org.example.domain.exception.NotGameParticipantException;
 import org.example.domain.exception.NotYourTurnException;
-import org.example.domain.model.CellType;
-import org.example.domain.model.GameMap;
-import org.example.domain.model.GameSession;
-import org.example.domain.model.GameStatus;
+import org.example.domain.model.*;
 import org.example.domain.repository.GameRepository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -229,6 +226,11 @@ public class GameServiceImpl implements GameService {
     @Override
     public List<GameSession> getGameHistory(UUID userUuid) {
         return repository.findAllFinishedByPlayerUuid(userUuid);
+    }
+
+    @Override
+    public List<PlayerStats> getLeaderboard(int n) {
+        return repository.findTopPlayers(n);
     }
 
     /**
