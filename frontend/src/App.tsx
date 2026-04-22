@@ -5,7 +5,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
 import { GameModeSelection } from './components/GameModeSelection';
-import { UserProfile } from './components/UserProfile';function Game({ gameApi, onBackToMenu, onPlayAgain, onShowProfile, onRetry }: { gameApi: ReturnType<typeof useGame>; onBackToMenu: () => void; onPlayAgain: () => void; onShowProfile: () => void; onRetry: () => void }) {
+import { UserProfile } from './components/UserProfile';
+
+function Game({ gameApi, onBackToMenu, onPlayAgain, onShowProfile, onRetry }: { gameApi: ReturnType<typeof useGame>; onBackToMenu: () => void; onPlayAgain: () => void; onShowProfile: () => void; onRetry: () => void }) {
   const { gameData, loading, makingMove, error, isNotYourTurn, makeMove, checkOpponentLeft } = gameApi;
   const { logout, user } = useAuth();
 

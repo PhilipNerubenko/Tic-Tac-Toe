@@ -218,8 +218,7 @@ export function useGame(): UseGameReturn {
       }
       
       // Преобразуем userId в UUID формат
-      const creatorId = user.userId;
-      const response = await fetchWithRetry(`/game?creatorId=${creatorId}&vsAi=${vsAi}`, {
+      const response = await fetchWithRetry(`/game?vsAi=${vsAi}`, {
         method: 'POST',
         headers: {
           ...getAuthHeader(),

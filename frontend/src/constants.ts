@@ -1,2 +1,2 @@
-export const STORAGE_KEY = 'tic_tac_toe_auth';
-export const PASSWORD_STORAGE_KEY = 'tic_tac_toe_password';
+export const ACCESS_TOKEN_KEY = 'access_token';
+export const USER_DATA_KEY = 'user_data';
