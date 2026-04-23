@@ -38,17 +38,14 @@ import java.util.stream.Collectors;
 public class GameController {
 
     private final GameService gameService;
-    private final UserService userService;
 
     /**
      * Конструктор для инициализации контроллера.
      *
      * @param gameService сервис для обработки игровой логики и ходов ИИ.
-     * @param userService сервис для работы с пользователями.
      */
-    public GameController(GameService gameService, UserService userService) {
+    public GameController(GameService gameService) {
         this.gameService = gameService;
-        this.userService = userService;
     }
 
     /**

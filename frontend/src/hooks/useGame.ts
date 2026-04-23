@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 const checkOpponentAbortControllerRef = { current: null as AbortController | null };
 import type { GameData } from '../interfaces/game';
 import { useAuth } from '../contexts/AuthContext';
+import { authorizedFetch } from '../utils/api';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // ms
@@ -37,43 +38,41 @@ export function useGame(): UseGameReturn {
   const [makingMove, setMakingMove] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isNotYourTurn, setIsNotYourTurn] = useState(false);
-  const { getAuthHeader, user } = useAuth();
+   const { user } = useAuth();
   const pollingRef = useRef<number | null>(null);
   const currentGameIdRef = useRef<string | null>(null);
 
-  // Функция для получения состояния игры
-  const fetchGameState = useCallback(
-    async (gameId: string): Promise<GameData | null> => {
-      try {
-        const response = await fetch(`/game/${gameId}`, {
-          headers: getAuthHeader(),
-        });
-        
-        if (response.status === 403) {
-          setIsNotYourTurn(true);
-          throw new Error('Not your turn!');
-        }
-        
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        if (isValidGameData(data)) {
-          setIsNotYourTurn(false);
-          return data;
-        }
-        return null;
-      } catch (err) {
-        if (err instanceof Error && err.message.includes('Not your turn')) {
-          throw err;
-        }
-        console.error('Fetch game state error:', err);
-        return null;
-      }
-    },
-    [getAuthHeader]
-  );
+   // Функция для получения состояния игры
+   const fetchGameState = useCallback(
+     async (gameId: string): Promise<GameData | null> => {
+       try {
+         const response = await authorizedFetch(`/game/${gameId}`);
+
+         if (response.status === 403) {
+           setIsNotYourTurn(true);
+           throw new Error('Not your turn!');
+         }
+
+         if (!response.ok) {
+           throw new Error(`Server error: ${response.status}`);
+         }
+
+         const data = await response.json();
+         if (isValidGameData(data)) {
+           setIsNotYourTurn(false);
+           return data;
+         }
+         return null;
+       } catch (err) {
+         if (err instanceof Error && err.message.includes('Not your turn')) {
+           throw err;
+         }
+         console.error('Fetch game state error:', err);
+         return null;
+       }
+     },
+     []
+   );
 
   // Polling для автоматического обновления
   useEffect(() => {
@@ -127,12 +126,11 @@ export function useGame(): UseGameReturn {
                 checkOpponentAbortControllerRef.current = new AbortController();
                 const signal = checkOpponentAbortControllerRef.current.signal;
 
-                // Автоматически проверяем, покинул ли соперник игру
-                fetch(`/game/${currentGameIdRef.current}/check-opponent-left?timeoutSeconds=30`, {
-                  method: 'POST',
-                  headers: getAuthHeader(),
-                  signal,
-                })
+                 // Автоматически проверяем, покинул ли соперник игру
+                 authorizedFetch(`/game/${currentGameIdRef.current}/check-opponent-left?timeoutSeconds=30`, {
+                   method: 'POST',
+                   signal,
+                 })
                   .then((response) => {
                     if (response.ok) {
                       return response.json();
@@ -176,185 +174,174 @@ export function useGame(): UseGameReturn {
         pollingRef.current = null;
       }
     };
-  }, [gameData?.id, fetchGameState, user, getAuthHeader]);
+   }, [gameData?.id, fetchGameState, user]);
 
-  // Fetch with retry logic
-  const fetchWithRetry = useCallback(
-    async (url: string, options?: RequestInit, retries = MAX_RETRIES): Promise<Response> => {
-      try {
-        const response = await fetch(url, options);
-        if (!response.ok) {
-          if (response.status === 403) {
-            setIsNotYourTurn(true);
-          }
-          throw new Error(`Server error: ${response.status}`);
-        }
-        return response;
-      } catch (err) {
-        if (retries > 0) {
-          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
-          return fetchWithRetry(url, options, retries - 1);
-        }
-        throw err;
-      }
-    },
-    []
-  );
+   // Fetch with retry logic
+   const fetchWithRetry = useCallback(
+     async (url: string, options?: RequestInit, retries = MAX_RETRIES): Promise<Response> => {
+       try {
+         const response = await authorizedFetch(url, options);
+         if (!response.ok) {
+           if (response.status === 403) {
+             setIsNotYourTurn(true);
+           }
+           throw new Error(`Server error: ${response.status}`);
+         }
+         return response;
+       } catch (err) {
+         if (retries > 0) {
+           await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+           return fetchWithRetry(url, options, retries - 1);
+         }
+         throw err;
+       }
+     },
+     []
+   );
 
-  const startNewGame = useCallback(async (vsAi: boolean = true) => {
-    // Останавливаем polling предыдущей игры
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
-    currentGameIdRef.current = null;
-    
-    setLoading(true);
-    setError(null);
-    setIsNotYourTurn(false);
-    try {
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-      
-      // Преобразуем userId в UUID формат
-      const response = await fetchWithRetry(`/game?vsAi=${vsAi}`, {
-        method: 'POST',
-        headers: {
-          ...getAuthHeader(),
-        },
-      });
-      const data = await response.json();
+   const startNewGame = useCallback(async (vsAi: boolean = true) => {
+     // Останавливаем polling предыдущей игры
+     if (pollingRef.current) {
+       clearInterval(pollingRef.current);
+       pollingRef.current = null;
+     }
+     currentGameIdRef.current = null;
 
-      if (!isValidGameData(data)) {
-        throw new Error('Invalid game data structure');
-      }
-      setGameData(data as GameData);
-      currentGameIdRef.current = data.id;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to connect to server';
-      setError(errorMsg);
-      console.error('Game start error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchWithRetry, getAuthHeader, user]);
+     setLoading(true);
+     setError(null);
+     setIsNotYourTurn(false);
+     try {
+       if (!user) {
+         throw new Error('User not authenticated');
+       }
 
-  const makeMove = useCallback(
-    async (row: number, col: number) => {
-      if (
-        !gameData ||
-        !user || 
-        gameData.gameMap.map[row][col] !== 0 ||
-        gameData.status !== 'PLAYER_TURN' ||
-        gameData.currentPlayer !== user.userId ||
-        makingMove
-      ) {
-        return;
-      }
+       // Преобразуем userId в UUID формат
+       const response = await fetchWithRetry(`/game?vsAi=${vsAi}`, {
+         method: 'POST',
+       });
+       const data = await response.json();
 
-    
-      const mySymbol = gameData.playerX === user.userId ? 1 : 2;
+       if (!isValidGameData(data)) {
+         throw new Error('Invalid game data structure');
+       }
+       setGameData(data as GameData);
+       currentGameIdRef.current = data.id;
+     } catch (err) {
+       const errorMsg = err instanceof Error ? err.message : 'Failed to connect to server';
+       setError(errorMsg);
+       console.error('Game start error:', err);
+     } finally {
+       setLoading(false);
+     }
+   }, [fetchWithRetry, user]);
 
-      // Deep copy the game board
-      const newMap = gameData.gameMap.map.map((r: number[]) => [...r]);
-      newMap[row][col] = mySymbol;
+   const makeMove = useCallback(
+     async (row: number, col: number) => {
+       if (
+         !gameData ||
+         !user ||
+         gameData.gameMap.map[row][col] !== 0 ||
+         gameData.status !== 'PLAYER_TURN' ||
+         gameData.currentPlayer !== user.userId ||
+         makingMove
+       ) {
+         return;
+       }
 
-      setMakingMove(true);
-      setError(null);
-      setIsNotYourTurn(false);
-      try {
-        const response = await fetchWithRetry(`/game/${gameData.id}/move`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeader(),
-          },
-          body: JSON.stringify({
-            gameMap: { ...gameData.gameMap, map: newMap },
-          }),
-        });
-        
-        const updated = await response.json();
-        
-        if (!isValidGameData(updated)) {
-          throw new Error('Invalid response structure');
-        }
-        setGameData(updated as GameData);
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Move failed';
-        setError(errorMsg);
-        console.error('Move error:', err);
-      } finally {
-        setMakingMove(false);
-      }
-    },
-    [gameData, user, makingMove, fetchWithRetry, getAuthHeader]
-  );
 
-  const joinGame = useCallback(async (sessionId: string) => {
-    // Останавливаем polling предыдущей игры
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
-    currentGameIdRef.current = null;
-    
-    setLoading(true);
-    setError(null);
-    setIsNotYourTurn(false);
-    try {
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+       const mySymbol = gameData.playerX === user.userId ? 1 : 2;
 
-      // Преобразуем userId в UUID формат
-      const guestId = user.userId;
-      const response = await fetchWithRetry(`/game/${sessionId}/join?guestId=${guestId}`, {
-        method: 'POST',
-        headers: {
-          ...getAuthHeader(),
-        },
-      });
-      const data = await response.json();
+       // Deep copy the game board
+       const newMap = gameData.gameMap.map.map((r: number[]) => [...r]);
+       newMap[row][col] = mySymbol;
 
-      if (!isValidGameData(data)) {
-        throw new Error('Invalid game data structure');
-      }
-      setGameData(data as GameData);
-      currentGameIdRef.current = data.id;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to join game';
-      setError(errorMsg);
-      console.error('Join game error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchWithRetry, getAuthHeader, user]);
+       setMakingMove(true);
+       setError(null);
+       setIsNotYourTurn(false);
+       try {
+         const response = await fetchWithRetry(`/game/${gameData.id}/move`, {
+           method: 'POST',
+           body: JSON.stringify({
+             gameMap: { ...gameData.gameMap, map: newMap },
+           }),
+         });
 
-  const checkOpponentLeft = useCallback(async () => {
-    if (!gameData || !gameData.id) {
-      return;
-    }
-    
-    try {
-      const response = await fetch(`/game/${gameData.id}/check-opponent-left?timeoutSeconds=30`, {
-        method: 'POST',
-        headers: getAuthHeader(),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      if (isValidGameData(data)) {
-        setGameData(data as GameData);
-      }
-    } catch (err) {
-      console.error('Check opponent left error:', err);
-    }
-  }, [gameData, getAuthHeader]);
+         const updated = await response.json();
+
+         if (!isValidGameData(updated)) {
+           throw new Error('Invalid response structure');
+         }
+         setGameData(updated as GameData);
+       } catch (err) {
+         const errorMsg = err instanceof Error ? err.message : 'Move failed';
+         setError(errorMsg);
+         console.error('Move error:', err);
+       } finally {
+         setMakingMove(false);
+       }
+     },
+     [gameData, user, makingMove, fetchWithRetry]
+   );
+
+   const joinGame = useCallback(async (sessionId: string) => {
+     // Останавливаем polling предыдущей игры
+     if (pollingRef.current) {
+       clearInterval(pollingRef.current);
+       pollingRef.current = null;
+     }
+     currentGameIdRef.current = null;
+
+     setLoading(true);
+     setError(null);
+     setIsNotYourTurn(false);
+     try {
+       if (!user) {
+         throw new Error('User not authenticated');
+       }
+
+       // Преобразуем userId в UUID формат
+       const guestId = user.userId;
+       const response = await fetchWithRetry(`/game/${sessionId}/join?guestId=${guestId}`, {
+         method: 'POST',
+       });
+       const data = await response.json();
+
+       if (!isValidGameData(data)) {
+         throw new Error('Invalid game data structure');
+       }
+       setGameData(data as GameData);
+       currentGameIdRef.current = data.id;
+     } catch (err) {
+       const errorMsg = err instanceof Error ? err.message : 'Failed to join game';
+       setError(errorMsg);
+       console.error('Join game error:', err);
+     } finally {
+       setLoading(false);
+     }
+   }, [fetchWithRetry, user]);
+
+   const checkOpponentLeft = useCallback(async () => {
+     if (!gameData || !gameData.id) {
+       return;
+     }
+
+     try {
+       const response = await authorizedFetch(`/game/${gameData.id}/check-opponent-left?timeoutSeconds=30`, {
+         method: 'POST',
+       });
+
+       if (!response.ok) {
+         throw new Error(`Server error: ${response.status}`);
+       }
+
+       const data = await response.json();
+       if (isValidGameData(data)) {
+         setGameData(data as GameData);
+       }
+     } catch (err) {
+       console.error('Check opponent left error:', err);
+     }
+   }, [gameData]);
 
   const resetGame = useCallback(() => {
     // Останавливаем polling

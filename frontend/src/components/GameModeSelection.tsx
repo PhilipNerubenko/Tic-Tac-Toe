@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import type { GameData } from '../interfaces/game';
+import { TopMasters } from './TopMasters';
+import { GameHistory } from './GameHistory';
+import { authorizedFetch } from '../utils/api';
 
 interface GameModeSelectionProps {
   onStartGame: (vsAi: boolean) => void;
@@ -10,7 +13,9 @@ interface GameModeSelectionProps {
 export const GameModeSelection: React.FC<GameModeSelectionProps> = ({ onStartGame, onJoinGame }) => {
   const [activeGames, setActiveGames] = useState<GameData[]>([]);
   const [loading, setLoading] = useState(false);
-  const { getAuthHeader, user } = useAuth();
+  const [showTopMasters, setShowTopMasters] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const { user } = useAuth();
   const isFetchingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -27,10 +32,7 @@ export const GameModeSelection: React.FC<GameModeSelectionProps> = ({ onStartGam
 
     try {
       setLoading(true);
-      const response = await fetch('/game/active', {
-        headers: {
-          ...getAuthHeader(),
-        },
+      const response = await authorizedFetch('/game/active', {
         signal: abortControllerRef.current.signal,
       });
       if (response.ok) {
@@ -47,7 +49,7 @@ export const GameModeSelection: React.FC<GameModeSelectionProps> = ({ onStartGam
       setLoading(false);
       isFetchingRef.current = false;
     }
-  }, [getAuthHeader]);
+  }, []);
 
   useEffect(() => {
     // Fetch active games immediately
@@ -84,6 +86,7 @@ export const GameModeSelection: React.FC<GameModeSelectionProps> = ({ onStartGam
   };
 
   return (
+    <>
     <div className="game-mode-selection">
       <h1 className="welcome-title">Choose Game Mode</h1>
       <div className="mode-buttons">
@@ -98,6 +101,18 @@ export const GameModeSelection: React.FC<GameModeSelectionProps> = ({ onStartGam
           onClick={() => onStartGame(false)}
         >
           Play vs Human
+        </button>
+        <button
+          className="mode-btn top-masters-btn"
+          onClick={() => setShowTopMasters(true)}
+        >
+          Top Masters
+        </button>
+        <button
+          className="mode-btn history-btn"
+          onClick={() => setShowHistory(true)}
+        >
+          History
         </button>
       </div>
       
@@ -135,5 +150,8 @@ export const GameModeSelection: React.FC<GameModeSelectionProps> = ({ onStartGam
         )}
       </div>
     </div>
+    {showTopMasters && <TopMasters onClose={() => setShowTopMasters(false)} />}
+    {showHistory && <GameHistory onClose={() => setShowHistory(false)} />}
+    </>
   );
 };

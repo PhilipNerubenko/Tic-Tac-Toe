@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode, useEffect } from 'react';
-import { ACCESS_TOKEN_KEY, USER_DATA_KEY } from '../constants';
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_DATA_KEY } from '../constants';
+import { authorizedFetch, logout as apiLogout } from '../utils/api';
 
 interface User {
   userId: string;
@@ -33,108 +34,109 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-const login = useCallback(async (login: string, password: string): Promise<boolean> => {
-  try {
-    setError(null);
-    
-    const response = await fetch('/auth/signin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ login, password }),
-    });
+   const login = useCallback(async (login: string, password: string): Promise<boolean> => {
+     try {
+       setError(null);
 
-    if (!response.ok) {
-      setError('Invalid login or password');
-      return false;
-    }
+       const response = await authorizedFetch('/auth/signin', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ login, password }),
+       });
 
-    const authData = await response.json(); 
-    const token = authData.accessToken;
+       if (!response.ok) {
+         setError('Invalid login or password');
+         return false;
+       }
 
-    const meResponse = await fetch('/auth/me', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+       const authData = await response.json();
+       const { accessToken, refreshToken } = authData;
 
-    if (!meResponse.ok) {
-      setError('Failed to fetch user profile');
-      return false;
-    }
+       localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+       if (refreshToken) {
+         localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+       }
+       setToken(accessToken);
 
-    const userDataFromApi = await meResponse.json();
+       const meResponse = await authorizedFetch('/auth/me');
 
-    const userData: User = { 
-      userId: userDataFromApi.id,
-      login: userDataFromApi.login 
-    };
+       if (!meResponse.ok) {
+         setError('Failed to fetch user profile');
+         return false;
+       }
 
-    setToken(token);
-    setUser(userData);
-    localStorage.setItem(ACCESS_TOKEN_KEY, token);
-    localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+       const userDataFromApi = await meResponse.json();
 
-    return true;
-  } catch (err) {
-    setError('Connection error');
-    console.error('Login flow error:', err);
-    return false;
-  }
-}, []);
+       const userData: User =
+       {
+         userId: userDataFromApi.id,
+         login: userDataFromApi.login
+       };
 
-  const register = useCallback(async (login: string, password: string): Promise<boolean> => {
-    try {
-      setError(null);
-      const response = await fetch('/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ login, password }),
-      });
+       setUser(userData);
+       localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
 
-      if (!response.ok) {
-        const data = await response.json();
-        setError(data.message || 'Registration failed');
-        return false;
-      }
+       return true;
+     } catch (err) {
+       setError('Connection error');
+       console.error('Login flow error:', err);
+       return false;
+     }
+   }, []);
 
-      return true;
-    } catch (err) {
-      setError('Connection error');
-      console.error('Registration error:', err);
-      return false;
-    }
-  }, []);
+   const register = useCallback(async (login: string, password: string): Promise<boolean> => {
+     try {
+       setError(null);
+       const response = await authorizedFetch('/auth/signup', {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json',
+         },
+         body: JSON.stringify({ login, password }),
+       });
+
+       if (!response.ok) {
+         const data = await response.json();
+         setError(data.message || 'Registration failed');
+         return false;
+       }
+
+       return true;
+     } catch (err) {
+       setError('Connection error');
+       console.error('Registration error:', err);
+       return false;
+     }
+   }, []);
 
   const getAuthHeader = useCallback((): Record<string, string> => {
     if (!token) return {};
     return { Authorization: `Bearer ${token}` };
   }, [token]);
 
-  const fetchUserById = useCallback(async (userId: string): Promise<{ id: string; login: string } | null> => {
-    try {
-      const headers = getAuthHeader();
-      const response = await fetch(`/auth/${userId}`, {
-        headers: Object.keys(headers).length ? headers : undefined,
-      });
-      if (!response.ok) {
-        return null;
-      }
-      const data = await response.json();
-      return { id: data.id, login: data.login };
-    } catch (err) {
-      console.error('Fetch user error:', err);
-      return null;
-    }
-  }, [getAuthHeader]);
+   const fetchUserById = useCallback(async (userId: string): Promise<{ id: string; login: string } | null> => {
+     try {
+       const response = await authorizedFetch(`/auth/${userId}`);
+       if (!response.ok) {
+         return null;
+       }
+       const data = await response.json();
+       return { id: data.id, login: data.login };
+     } catch (err) {
+       console.error('Fetch user error:', err);
+       return null;
+     }
+   }, []);
 
 const logout = useCallback(() => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(USER_DATA_KEY);
-  }, []);
+   setToken(null);
+   setUser(null);
+   localStorage.removeItem(ACCESS_TOKEN_KEY);
+   localStorage.removeItem(REFRESH_TOKEN_KEY);
+   localStorage.removeItem(USER_DATA_KEY);
+   localStorage.removeItem('token_expiry');
+   apiLogout();
+ }, []);
 
   return (
     <AuthContext.Provider
