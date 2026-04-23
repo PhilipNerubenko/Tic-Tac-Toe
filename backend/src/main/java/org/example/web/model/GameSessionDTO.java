@@ -62,7 +62,7 @@ public class GameSessionDTO {
         this.playerO = playerO;
         this.currentPlayer = currentPlayer;
         this.winner = winner;
-        this.lastActiveAt = lastActiveAt != null ? lastActiveAt : Instant.now();
+        this.lastActiveAt = lastActiveAt;
         this.createdAt = createdAt;
     }
 

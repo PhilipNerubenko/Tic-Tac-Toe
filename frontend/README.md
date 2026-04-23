@@ -216,7 +216,7 @@ The frontend automatically supports any board size returned by the backend throu
 ### Authentication issues
 
 -   Verify credentials are correct; check for duplicate registration attempts (409 conflict)
--   Ensure tokens are stored in `localStorage` with correct keys (`accessToken`, `refreshToken`)
+-   Ensure tokens are stored in `localStorage` with correct keys (`access_token`, `refresh_token`)
 -   Check that `authorizedFetch` includes `Authorization: Bearer <token>` header (inspect network tab)
 -   If 401 persists after refresh, you may be logged out — login again
 -   Clear `localStorage` and re-authenticate if token format seems corrupted
