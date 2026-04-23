@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -44,7 +44,7 @@ class GameMapperTest {
         UUID playerO = UUID.randomUUID();
         GameMapEntity mapEntity = new GameMapEntity(3);
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         GameSession domain = GameMapper.toDomain(entity);
@@ -65,7 +65,7 @@ class GameMapperTest {
         UUID playerO = UUID.randomUUID();
         GameMap map = new GameMap(3);
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession domain = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         GameSessionEntity entity = GameMapper.toEntity(domain);
@@ -83,7 +83,7 @@ class GameMapperTest {
         UUID id = UUID.randomUUID();
         GameMapEntity mapEntity = new GameMapEntity(3);
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, UUID.randomUUID(), null, null, null, lastActiveAt, createdAt);
 
         Map<UUID, GameSessionEntity> entities = new HashMap<>();

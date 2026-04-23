@@ -1,6 +1,6 @@
 package org.example.web.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -20,8 +20,8 @@ public class GameSessionDTO {
     /** Текущий статус игры в формате, понятном для веб-интерфейса */
     private GameStatusDTO status;
 
-    private UUID playerX; // Добавь это
-    private UUID playerO; // Добавь это
+    private UUID playerX;
+    private UUID playerO;
 
     /** Идентификатор игрока, чей сейчас ход */
     private UUID currentPlayer;
@@ -30,10 +30,10 @@ public class GameSessionDTO {
     private UUID winner;
 
     /** Время последнего действия игрока */
-    private java.time.Instant lastActiveAt;
+    private Instant lastActiveAt;
 
-        /** Дата создания игры */
-    private LocalDateTime createdAt;
+    /** Дата создания игры */
+    private Instant createdAt;
 
     /**
      * Конструктор без параметров.
@@ -54,7 +54,7 @@ public class GameSessionDTO {
      * @param lastActiveAt  время последнего действия игрока (может быть null).
      * @param createdAt     дата создания игры.
      */
-    public GameSessionDTO(UUID id, GameMapDTO gameMap, GameStatusDTO status, UUID playerX, UUID playerO, UUID currentPlayer, UUID winner, java.time.Instant lastActiveAt, LocalDateTime createdAt) {
+    public GameSessionDTO(UUID id, GameMapDTO gameMap, GameStatusDTO status, UUID playerX, UUID playerO, UUID currentPlayer, UUID winner, Instant lastActiveAt, Instant createdAt) {
         this.id = id;
         this.gameMap = gameMap;
         this.status = status;
@@ -62,8 +62,8 @@ public class GameSessionDTO {
         this.playerO = playerO;
         this.currentPlayer = currentPlayer;
         this.winner = winner;
-         this.lastActiveAt = lastActiveAt != null ? lastActiveAt : java.time.Instant.now();
-         this.createdAt = createdAt;
+        this.lastActiveAt = lastActiveAt != null ? lastActiveAt : Instant.now();
+        this.createdAt = createdAt;
     }
 
     /**
@@ -166,7 +166,7 @@ public class GameSessionDTO {
      * Возвращает время последнего действия игрока.
      * @return время последнего действия
      */
-    public java.time.Instant getLastActiveAt() {
+    public Instant getLastActiveAt() {
         return lastActiveAt;
     }
     
@@ -174,7 +174,7 @@ public class GameSessionDTO {
      * Устанавливает время последнего действия игрока.
      * @param lastActiveAt время последнего действия
      */
-    public void setLastActiveAt(java.time.Instant lastActiveAt) {
+    public void setLastActiveAt(Instant lastActiveAt) {
         this.lastActiveAt = lastActiveAt;
     }
 
@@ -182,7 +182,7 @@ public class GameSessionDTO {
      * Возвращает дату создания игры.
      * @return дата создания игры
      */
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
@@ -190,7 +190,7 @@ public class GameSessionDTO {
      * Устанавливает дату создания игры.
      * @param createdAt дата создания игры
      */
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 }

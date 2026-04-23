@@ -1,6 +1,6 @@
 package org.example.domain.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -38,7 +38,7 @@ public class GameSession {
     private java.time.Instant lastActiveAt;
 
     /** Дата создания игры */
-    private final LocalDateTime createdAt;
+    private final Instant createdAt;
 
     /**
      * Создает новую игровую сессию.
@@ -51,7 +51,7 @@ public class GameSession {
         this.map = map;
         this.playerX = creatorId;
         this.lastActiveAt = java.time.Instant.now();
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = java.time.Instant.now();
 
         if (isVsAi) {
             this.playerO = AI_PLAYER_ID;
@@ -77,7 +77,7 @@ public class GameSession {
      */
     public GameSession(UUID id, GameMap map, GameStatus status,
                        UUID playerX, UUID playerO, UUID currentPlayer, UUID winner,
-                       java.time.Instant lastActiveAt, LocalDateTime createdAt) {
+                       Instant lastActiveAt, Instant createdAt) {
         this.id = id;
         this.map = map;
         this.status = status;
@@ -260,7 +260,7 @@ public class GameSession {
         this.lastActiveAt = java.time.Instant.now();
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 }

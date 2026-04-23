@@ -21,7 +21,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -81,7 +81,7 @@ class GameControllerTest {
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
 
         GameMap map = new GameMap(3);
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
@@ -159,7 +159,7 @@ class GameControllerTest {
         UUID playerX = UUID.randomUUID();
         UUID playerO = UUID.randomUUID();
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
 
         GameMap map = new GameMap();
         GameSession session = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
@@ -207,7 +207,7 @@ class GameControllerTest {
         UUID playerX = UUID.randomUUID(); // user1
         UUID playerO = UUID.randomUUID(); // user2
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
 
         GameMap map = new GameMap(3);
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
@@ -242,7 +242,7 @@ class GameControllerTest {
         UUID sessionId = UUID.randomUUID();
         UUID playerX = UUID.randomUUID();
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
 
         GameMap map = new GameMap(3);
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null, lastActiveAt, createdAt);
@@ -266,7 +266,7 @@ class GameControllerTest {
         UUID creatorId = UUID.randomUUID();
         UUID guestId = UUID.randomUUID();
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
 
         GameMap map = new GameMap(3);
         GameSession session = new GameSession(sessionId, map, GameStatus.WAITING_FOR_PLAYERS, creatorId, null, creatorId, null, lastActiveAt, createdAt);
@@ -289,7 +289,7 @@ class GameControllerTest {
         UUID sessionId = UUID.randomUUID();
         UUID creatorId = UUID.randomUUID();
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
 
         GameMap map = new GameMap(3);
         GameSession session = new GameSession(sessionId, map, GameStatus.WAITING_FOR_PLAYERS, creatorId, null, creatorId, null, lastActiveAt, createdAt);
@@ -307,7 +307,7 @@ class GameControllerTest {
         UUID sessionId = UUID.randomUUID();
         UUID playerX = UUID.randomUUID();
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
 
         GameMap map = new GameMap(3);
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, UUID.randomUUID(), playerX, null, lastActiveAt, createdAt);

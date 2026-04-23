@@ -2,7 +2,7 @@ package org.example.datasource.model;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -50,7 +50,7 @@ public class GameSessionEntity {
 
     /** Дата создания игры */
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     /**
      * Конструктор по умолчанию, необходимый для JPA/Hibernate.
@@ -70,15 +70,15 @@ public class GameSessionEntity {
         this.map = map;
         this.status = GameStatusEntity.WAITING_FOR_PLAYERS;
         this.lastActiveAt = java.time.Instant.now();
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = java.time.Instant.now();
     }
 
     /**
      * Полный конструктор для маппинга или восстановления сессии.
      */
     public GameSessionEntity(UUID id, GameMapEntity map, GameStatusEntity status,
-                             UUID playerX, UUID playerO, UUID currentPlayer, UUID winner, java.time.Instant lastActiveAt,
-                             LocalDateTime createdAt) {
+                             UUID playerX, UUID playerO, UUID currentPlayer, UUID winner, Instant lastActiveAt,
+                             Instant createdAt) {
         this.id = id;
         this.map = map;
         this.status = status;
@@ -202,11 +202,11 @@ public class GameSessionEntity {
         this.lastActiveAt = lastActiveAt;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 }
