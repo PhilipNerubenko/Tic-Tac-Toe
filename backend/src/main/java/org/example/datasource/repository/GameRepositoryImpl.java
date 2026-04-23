@@ -95,7 +95,7 @@ public class GameRepositoryImpl implements GameRepository {
                 .map(row -> new PlayerStats(
                         (UUID) row[0],
                         (String) row[1],
-                        (Double) row[2]
+                        ((Number) row[4]).doubleValue()
                 ))
                 .toList();
     }

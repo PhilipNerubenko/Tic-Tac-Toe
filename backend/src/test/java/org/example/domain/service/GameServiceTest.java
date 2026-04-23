@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -145,7 +144,7 @@ class GameServiceTest {
         UUID playerO = UUID.randomUUID();
         GameMap oldMap = new GameMap(new int[][]{{0,0},{0,0}}, 2);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession savedSession = new GameSession(sessionId, oldMap, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         GameMap newMap = new GameMap(new int[][]{{1,0},{0,0}}, 2);
@@ -164,7 +163,7 @@ class GameServiceTest {
         UUID playerO = UUID.randomUUID();
         GameMap map = new GameMap(2);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession unknownSession = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         Mockito.when(gameRepository.findById(any())).thenReturn(Optional.empty());
@@ -181,7 +180,7 @@ class GameServiceTest {
         UUID playerO = UUID.randomUUID();
         GameMap oldMap = new GameMap(new int[][]{{0,0},{0,0}}, 2);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession savedSession = new GameSession(sessionId, oldMap, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         GameMap newMap = new GameMap(new int[][]{{1,1},{0,0}}, 2);
@@ -200,7 +199,7 @@ class GameServiceTest {
         UUID playerO = UUID.randomUUID();
         GameMap oldMap = new GameMap(new int[][]{{2,0},{0,0}}, 2);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession savedSession = new GameSession(sessionId, oldMap, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         GameMap newMap = new GameMap(new int[][]{{1,0},{0,0}}, 2);
@@ -219,7 +218,7 @@ class GameServiceTest {
         UUID playerO = UUID.randomUUID();
         GameMap oldMap = new GameMap(new int[][]{{2,0},{0,0}}, 2);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession savedSession = new GameSession(sessionId, oldMap, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         GameMap newMap = new GameMap(new int[][]{{2,0},{0,0}}, 2);
@@ -238,7 +237,7 @@ class GameServiceTest {
         UUID playerO = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 
@@ -258,7 +257,7 @@ class GameServiceTest {
         UUID playerO = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 
@@ -312,7 +311,7 @@ class GameServiceTest {
         UUID guestId = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.WAITING_FOR_PLAYERS, creatorId, null, creatorId, null, lastActiveAt, createdAt);
 
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
@@ -332,7 +331,7 @@ class GameServiceTest {
         UUID guestId = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, creatorId, GameSession.AI_PLAYER_ID, creatorId, null, lastActiveAt, createdAt);
 
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
@@ -348,7 +347,7 @@ class GameServiceTest {
         UUID guestId = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.WAITING_FOR_PLAYERS, creatorId, playerO, creatorId, null, lastActiveAt, createdAt);
 
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
@@ -363,7 +362,7 @@ class GameServiceTest {
         UUID guestId = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, creatorId, null, creatorId, null, lastActiveAt, createdAt);
 
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
@@ -388,7 +387,7 @@ class GameServiceTest {
         UUID sessionId3 = UUID.randomUUID();
         UUID creatorId = UUID.randomUUID();
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
 
         // Waiting multiplayer game
         GameMap map1 = new GameMap(3);
@@ -419,7 +418,7 @@ class GameServiceTest {
         UUID sessionId = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession userMove = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, UUID.randomUUID(), null, null, null, lastActiveAt, createdAt);
 
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.empty());
@@ -434,7 +433,7 @@ class GameServiceTest {
         UUID playerO = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 
@@ -454,7 +453,7 @@ class GameServiceTest {
         UUID playerX = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null, lastActiveAt, createdAt);
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 
@@ -515,7 +514,7 @@ class GameServiceTest {
         UUID playerX = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null, lastActiveAt, createdAt);
         Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
 
@@ -531,7 +530,7 @@ class GameServiceTest {
         UUID otherUser = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null, lastActiveAt, createdAt);
         Mockito.when(gameRepository.findById(sessionId)).thenReturn(Optional.of(session));
 
@@ -544,7 +543,7 @@ class GameServiceTest {
         UUID playerX = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, UUID.randomUUID(), playerX, null, lastActiveAt, createdAt);
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 
@@ -561,7 +560,7 @@ class GameServiceTest {
         UUID playerO = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now().minusSeconds(60);
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 
@@ -578,7 +577,7 @@ class GameServiceTest {
         UUID playerX = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now().minusSeconds(60);
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null, lastActiveAt, createdAt);
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 
@@ -594,7 +593,7 @@ class GameServiceTest {
         UUID playerX = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.VICTORY, playerX, GameSession.AI_PLAYER_ID, null, playerX, lastActiveAt, createdAt);
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 
@@ -611,7 +610,7 @@ class GameServiceTest {
         UUID otherUser = UUID.randomUUID();
         GameMap map = new GameMap(3);
         Instant lastActiveAt = Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, GameSession.AI_PLAYER_ID, playerX, null, lastActiveAt, createdAt);
         Mockito.when(gameRepository.findByIdForUpdate(sessionId)).thenReturn(Optional.of(session));
 

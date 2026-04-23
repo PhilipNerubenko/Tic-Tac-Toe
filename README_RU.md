@@ -10,7 +10,7 @@
 
 ## Описание
 
-Полнофункциональное веб-приложение классической игры "Крестики-нолики" с системой авторизации, профилем пользователя и современной многоуровневой архитектурой. Проект демонстрирует лучшие практики разработки с использованием Spring Boot для backend и React для frontend.
+Полнофункциональное веб-приложение классической игры «Крестики-нолики» с JWT-аутентификацией, профилями игроков, таблицей лидеров, историей игр и современной многоуровневой архитектурой. Проект демонстрирует лучшие практики разработки с использованием Spring Boot для бэкенда и React для фронтенда.
 
 <p align="center">
   <img src="./assets/game_preview.png" width="600" alt="Tic-Tac-Toe Preview">
@@ -19,14 +19,15 @@
 ## Особенности
 
 - ✅ **Spring Boot 3.3.4 Backend** — REST API с полной документацией OpenAPI/Swagger
-- ✅ **React 19.2.0 Frontend** — современный реактивный пользовательский интерфейс
-- ✅ **TypeScript 5.9.3** — строгая типизация для надежного кода
-- ✅ **PostgreSQL 15** — надёжное хранение данных игр и пользователей
-- ✅ **Spring Security** — базовая аутентификация и регистрация
-- ✅ **Docker Compose** — простое одноэтапное развертывание (3 контейнера: DB, Backend, Frontend)
-- ✅ **Слоистая архитектура** — разделение на слои (Web, Domain, Datasource)
-- ✅ **Dependency Injection** — управление зависимостями через Spring DI
-- ✅ **API документация** — интерактивная Swagger UI
+- ✅ **JWT Bearer Token Authentication** — Безопасная stateless-аутентификация с ротацией refresh-токенов
+- ✅ **React 19.2.0 Frontend** — Современный реактивный интерфейс с автоматическим обновлением токенов
+- ✅ **TypeScript 5.9.3** — Строгая типизация для надёжного кода
+- ✅ **PostgreSQL 15** — Надёжное хранение данных игр и пользователей
+- ✅ **Docker Compose** — Простое одноэтапное развертывание (3 контейнера: БД, Backend, Frontend)
+- ✅ **Слоистая архитектура** — Чёткое разделение (Web, Domain, Datasource слои)
+- ✅ **Dependency Injection** — Управление зависимостями через Spring DI
+- ✅ **Игровые возможности** — ИИ-противник, мультиплеер (PvP), таблица лидеров, история игр
+- ✅ **API документация** — Интерактивная Swagger UI с поддержкой Bearer-аутентификации
 
 ## Скриншоты
 
@@ -56,9 +57,21 @@ Tic-Tac-Toe/
 │   ├── src/main/java/org/example/
 │   │   ├── Main.java          # Точка входа приложения
 │   │   ├── web/               # REST контроллеры (Auth, Game)
+│   │   │   ├── controller/    # @RestController эндпоинты
+│   │   │   ├── filter/        # JWT фильтр аутентификации
+│   │   │   ├── mapper/        # DTO ↔ Entity конвертеры
+│   │   │   └── model/         # Request/Response DTOs
 │   │   ├── domain/            # Бизнес-логика (Auth, Game, User)
-│   │   ├── datasource/        # Работа с данными (JPA, PostgreSQL)
-│   │   └── di/                # Конфигурация DI и Security
+│   │   │   ├── model/         # Доменные сущности
+│   │   │   ├── repository/    # Интерфейсы репозиториев
+│   │   │   ├── service/       # Сервисы бизнес-логики
+│   │   │   └── exception/     # Пользовательские исключения
+│   │   ├── datasource/        # Слой доступа к данным (JPA, PostgreSQL)
+│   │   │   ├── model/         # JPA сущности
+│   │   │   └── repository/    # Реализации JPA
+│   │   └── di/config/         # DI и конфигурация безопасности
+│   │       ├── GameConfig     # Конфигурация игровых бинов
+│   │       └── SecurityConfig # Настройка JWT + Spring Security
 │   ├── build.gradle.kts       # Gradle конфигурация
 │   └── Dockerfile             # Docker образ для backend
 │
@@ -67,13 +80,15 @@ Tic-Tac-Toe/
 │   │   ├── App.tsx           # Главный компонент
 │   │   ├── components/       # UI компоненты (Login, Register, Game, Profile)
 │   │   ├── contexts/         # React Context (AuthContext)
-│   │   ├── hooks/            # Custom React hooks (useGame)
-│   │   └── interfaces/       # TypeScript интерфейсы
-│   ├── package.json          # Зависимости npm
-│   ├── vite.config.ts        # Vite конфигурация
+│   │   ├── hooks/            # Пользовательские хуки (useGame)
+│   │   ├── interfaces/       # TypeScript интерфейсы
+│   │   ├── utils/            # Утилиты API с автообновлением токенов
+│   │   └── constants.ts      # Ключи хранилища и константы
+│   ├── package.json          # npm зависимости
+│   ├── vite.config.ts        # Vite конфигурация с proxy
 │   └── Dockerfile            # Docker образ для frontend
 │
-└── docker-compose.yml        # Оркестрация контейнеров (DB + Backend + Frontend)
+└── docker-compose.yml        # Оркестрация контейнеров (БД + Backend + Frontend)
 ```
 
 ## Предварительные требования
@@ -92,7 +107,7 @@ Tic-Tac-Toe/
 
 ## 🚀 Как пользоваться приложением
 
-После запуска контейнеров или локальных серверов, проект доступен по следующим адресам:
+После запуска контейнеров или локальных серверов проект доступен по следующим адресам:
 
 ### 🖥 Пользовательский интерфейс (Frontend)
 
@@ -103,38 +118,90 @@ Tic-Tac-Toe/
 
 ### ⚙️ Инструменты разработчика (Backend)
 
-Backend работает в режиме **Headless API** — корневой путь не предназначен для прямого открытия. Используйте следующие ресурсы:
+Backend работает как **headless REST API**. Используйте следующие ресурсы:
 
 | Ресурс | Ссылка | Описание |
 | --- | --- | --- |
-| **Swagger UI** | [🔗 Открыть документацию](http://localhost:8081/swagger-ui.html) | Интерактивная документация API. |
-| **OpenAPI (JSON)** | [📄 Спецификация](http://localhost:8081/v3/api-docs) | JSON-спецификация для генерации клиентов или импорта в Postman. |
+| **Swagger UI** | [🔗 Открыть документацию](http://localhost:8081/swagger-ui.html) | Интерактивная документация API (аутентификация через Bearer token) |
+| **OpenAPI (JSON)** | [📄 Спецификация](http://localhost:8081/v3/api-docs) | Машиночитаемая спецификация API для генерации клиентов |
 
-### 📡 Примеры взаимодействия с API
+## 🔐 Аутентификация
+
+Приложение использует **JWT (JSON Web Token) Bearer-аутентификацию**. После регистрации или входа вы получаете access-токен (срок 1 час) и refresh-токен (срок 7 дней). Включайте access-токен в заголовке `Authorization` всех защищённых запросов:
+
+```
+Authorization: Bearer <your-access-token>
+```
+
+### Жизненный цикл токенов
+
+1. **Регистрация** → `POST /auth/signup` с `{ "login": "user", "password": "pass" }` → Возвращаются `accessToken` + `refreshToken`
+2. **Вход** → `POST /auth/signin` с учётными данными → Возвращаются токены
+3. **Доступ к защищённым эндпоинтам** → Заголовок `Authorization: Bearer <token>`
+4. **Обновление токенов** → `POST /auth/refresh/access` или `/auth/refresh/refresh` при истечении access-токена
+
+### Управление токенами на фронтенде
+
+Фронтенд автоматически хранит токены (localStorage) и обрабатывает их обновление. При получении 401 от API происходит прозрачная попытка обновить токен и повторить запрос.
+
+## 📡 Примеры взаимодействия с API
 
 ```bash
 # Регистрация нового пользователя
 curl -X POST "http://localhost:8081/auth/signup" \
      -H "Content-Type: application/json" \
-     -d '{"username": "player1", "password": "secret123"}'
+     -d '{"login": "player1", "password": "secret123"}'
 
-# Авторизация
-curl -X POST "http://localhost:8081/auth/login" \
+# Вход (JWT signin)
+curl -X POST "http://localhost:8081/auth/signin" \
      -H "Content-Type: application/json" \
-     -d '{"username": "player1", "password": "secret123"}'
+     -d '{"login": "player1", "password": "secret123"}'
 
-# Создать новую игру (POST /game?size=3)
-curl -s -X POST "http://localhost:8081/game?size=3" \
-     -u "$TICTACTOE_USER:$TICTACTOE_PASS"
+# Ответ: { "type": "Bearer", "accessToken": "...", "refreshToken": "..." }
+
+# Создать новую игру (против ИИ, 3x3 по умолчанию)
+curl -X POST "http://localhost:8081/game?size=3&vsAi=true" \
+     -H "Authorization: Bearer <your-access-token>"
 
 # Получить статус игры
 curl "http://localhost:8081/game/{id}" \
-     -u "$TICTACTOE_USER:$TICTACTOE_PASS"
+     -H "Authorization: Bearer <your-access-token>"
+
+# Сделать ход
+curl -X POST "http://localhost:8081/game/{id}/move" \
+     -H "Authorization: Bearer <your-access-token>" \
+     -H "Content-Type: application/json" \
+     -d '{"gameMap": {"map": [[1,0,0],[0,0,0],[0,0,0]], "size": 3}}'
+
+# Получить профиль пользователя
+curl "http://localhost:8081/auth/me" \
+     -H "Authorization: Bearer <your-access-token>"
+
+# Получить историю игр
+curl "http://localhost:8081/game/history" \
+     -H "Authorization: Bearer <your-access-token>"
+
+# Получить таблицу лидеров (топ 10)
+curl "http://localhost:8081/game/leaderboard?n=10" \
+     -H "Authorization: Bearer <your-access-token>"
+
+# Присоединиться к активной игре (PvP)
+curl -X POST "http://localhost:8081/game/{sessionId}/join?guestId=<your-uuid>" \
+     -H "Authorization: Bearer <your-access-token>"
+
+# Проверить, покинул ли соперник игру
+curl -X POST "http://localhost:8081/game/{id}/check-opponent-left?timeoutSeconds=30" \
+     -H "Authorization: Bearer <your-access-token>"
+
+# Обновить access-токен
+curl -X POST "http://localhost:8081/auth/refresh/access" \
+     -H "Content-Type: application/json" \
+     -d '{"refreshToken": "<your-refresh-token>"}'
 ```
 
 ## 🔧 Установка и запуск
 
-### Вариант 1 — развертывание с Docker Compose (рекомендуется)
+### Вариант 1 — Развертывание с Docker Compose (рекомендуется)
 
 - **Клонируйте репозиторий**
 
@@ -146,15 +213,25 @@ cd Tic-Tac-Toe
 - **Создайте файл .env** (если отсутствует)
 
 ```env
+# Database
 DB_NAME=game_sessions_storage
 DB_USER=postgres
-DB_PASSWORD=postgres
+DB_PASSWORD=your_secure_password_here
 DB_INTERNAL_PORT=5432
 DB_EXTERNAL_PORT=5433
+
+# Backend
 BACKEND_INTERNAL_PORT=8080
 BACKEND_EXTERNAL_PORT=8081
+
+# Frontend
 FRONTEND_EXTERNAL_PORT=3001
+
+# JWT Secret (сгенерировать: openssl rand -base64 32)
+JWT_SECRET=your_jwt_secret_key_min_32_bytes_base64_encoded
 ```
+
+> **Важно:** Для production сгенерируйте надёжный JWT secret. Используйте `openssl rand -base64 32` или менеджер паролей. Secret должен быть минимум 256 бит (32 байта) для HS256.
 
 - **Запустите приложение**
 
@@ -174,7 +251,7 @@ docker compose up --build -d
 docker compose down
 ```
 
-### Вариант 2 — локальная разработка
+### Вариант 2 — Локальная разработка
 
 #### PostgreSQL
 
@@ -201,21 +278,22 @@ cd backend
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/game_sessions_storage
 export SPRING_DATASOURCE_USERNAME=postgres
 export SPRING_DATASOURCE_PASSWORD=postgres
+export JWT_SECRET=$(openssl rand -base64 32)
 ```
 
-- **Создайте jar файл**
+- **Сборка и запуск**
 
 ```bash
 ./gradlew build
-```
-
-- **Запустите приложение**
-
-```bash
 ./gradlew bootRun
 ```
 
-Backend будет доступен по [http://localhost:8081](http://localhost:8081)
+Backend будет доступен по адресу [http://localhost:8081](http://localhost:8081)
+
+В Windows:
+```bash
+gradlew.bat bootRun
+```
 
 #### Frontend (React)
 
@@ -231,13 +309,13 @@ cd frontend
 npm install
 ```
 
-- **Запустите dev сервер**
+- **Запустите dev-сервер**
 
 ```bash
 npm run dev
 ```
 
-Frontend доступен по [http://localhost:5173](http://localhost:5173) (dev сервер Vite)
+Frontend будет доступен по адресу [http://localhost:5173](http://localhost:5173) (Vite dev-сервер). Dev-сервер проксирует запросы `/auth` и `/game` на `http://localhost:8081`.
 
 ## Доступные команды
 
@@ -247,49 +325,68 @@ Frontend доступен по [http://localhost:5173](http://localhost:5173) (d
 | --- | --- |
 | `./gradlew build` | Сборка проекта |
 | `./gradlew bootRun` | Запуск приложения |
-| `./gradlew test` | Запуск тестов |
+| `./gradlew test` | Запуск тестов (H2 in-memory БД) |
 | `./gradlew clean` | Очистка артефактов сборки |
 
 ### Frontend (npm)
 
 | Команда | Описание |
 | --- | --- |
-| `npm run dev` | Разработка с горячей перезагрузкой |
+| `npm run dev` | Разработка с горячей перезагрузкой и proxy |
 | `npm run build` | Production сборка |
 | `npm run lint` | Проверка кода с ESLint |
-| `npm run format` | Форматирование кода Prettier |
+| `npm run format` | Форматирование кода через Prettier |
 | `npm run preview` | Просмотр production сборки |
 
-## API документация
+## 📚 Документация API
 
 ### О Backend
 
-Backend приложения — это **Headless REST API**, разработанный на Spring Boot 3. Он обеспечивает полный функционал игровой логики и авторизации через HTTP endpoints.
+Backend — это **headless REST API** на Spring Boot 3 с JWT-аутентификацией. Он обеспечивает полную игровую логику, управление пользователями и статистику через HTTP endpoints.
 
-### Основные endpoints
+### Основные эндпоинты
 
-| Метод | Endpoint | Описание |
-| --- | --- | --- |
-| `POST` | `/auth/signup` | Регистрация нового пользователя |
-| `POST` | `/auth/login` | Авторизация (возвращает cookie сессии) |
-| `GET` | `/user/profile` | Профиль текущего пользователя |
-| `POST` | `/game?size=3` | Создать новую игру |
-| `POST` | `/game/{id}` | Сделать ход |
-| `GET` | `/game/{id}` | Получить статус игры |
-| `GET` | `/game` | Список всех игр пользователя |
+#### Аутентификация
 
-### Доступные ресурсы
+| Метод | Эндпоинт | Описание | Требуется авторизация |
+| ------ | -------------- | ------------------- | ------------- |
+| `POST` | `/auth/signup` | Регистрация нового пользователя | Нет |
+| `POST` | `/auth/signin` | Вход (возвращает JWT токены) | Нет |
+| `POST` | `/auth/refresh/access` | Обновить access-токен | Нет (требуется refresh-токен) |
+| `POST` | `/auth/refresh/refresh` | Обновить refresh-токен (ротация) | Нет (требуется refresh-токен) |
+| `GET` | `/auth/me` | Получить профиль текущего пользователя | Да (Bearer) |
 
-После запуска backend, полная документация API доступна в Swagger UI:
+#### Пользователь
+
+| Метод | Эндпоинт | Описание | Требуется авторизация |
+| ------ | ------------- | ---------------------- | ------------- |
+| `GET`  | `/auth/{id}` | Получить пользователя по ID (свой или admin) | Да (Bearer) |
+
+#### Игра
+
+| Метод | Эндпоинт | Описание | Требуется авторизация |
+| ------ | ----------- | ---------------------------------------------- | ------------- |
+| `POST` | `/game?size=3&vsAi=true` | Создать новую игровую сессию (против ИИ или PvP) | Да (Bearer) |
+| `POST` | `/game/{id}/move` | Отправить ход (X), ИИ отвечает автоматически (O) | Да (Bearer) |
+| `GET`  | `/game/{id}` | Получить статус игры | Да (Bearer) |
+| `GET`  | `/game/active` | Список всех доступных (ожидающих) игр | Да (Bearer) |
+| `POST` | `/game/{id}/join` | Второй игрок присоединяется к существующей игре | Да (Bearer) |
+| `POST` | `/game/{id}/check-opponent-left` | Проверить, покинул ли соперник игру | Да (Bearer) |
+| `GET`  | `/game/history` | Получить все завершённые игры текущего пользователя | Да (Bearer) |
+| `GET`  | `/game/leaderboard?n=10` | Топ N игроков по проценту побед | Да (Bearer) |
+
+### Интерактивная документация
+
+После запуска backend полная документация API доступна в Swagger UI:
 
 - **Swagger UI:** [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
 - **OpenAPI JSON:** [http://localhost:8081/v3/api-docs](http://localhost:8081/v3/api-docs)
 
-Вы можете тестировать все API endpoints прямо из Swagger интерфейса!
+> **Примечание:** Swagger UI поддерживает Bearer-аутентификацию. Нажмите кнопку "Authorize" (вверху справа) и введите `Bearer <your-access-token>` для тестирования защищённых endpoints.
 
 ## Архитектура
 
-### Backend архитектура (слои)
+### Backend-архитектура (слои)
 
 ```text
 ┌─────────────────────────────────────────┐
@@ -306,24 +403,33 @@ Backend приложения — это **Headless REST API**, разработ�
                │
 ┌──────────────▼──────────────────────────┐
 │    Datasource Layer (Repository)        │
-│   Работа с PostgreSQL (JPA/Hibernate)   │
+│   PostgreSQL Integration (JPA/Hibernate)│
 └─────────────────────────────────────────┘
 ```
 
 ### Компоненты
 
-- **Web Layer**: REST контроллеры, DTO модели, мапперы, фильтры авторизации
-- **Domain Layer**: Бизнес-логика, entity модели, интерфейсы репозитория, сервисы
+- **Web Layer**: REST контроллеры, DTO модели, мапперы, JWT фильтр аутентификации
+- **Domain Layer**: Бизнес-логика, entity модели, интерфейсы репозиториев, сервисы, ИИ (алгоритм Минимакса)
 - **Datasource Layer**: JPA репозитории, мапперы сущностей, PostgreSQL
-- **DI Configuration**: Spring конфигурация бинов, Security конфигурация
+- **DI Configuration**: Spring конфигурация бинов, JWT провайдер, Security конфигурация (stateless, Bearer tokens)
 
-### Frontend архитектура
+### Frontend-архитектура
 
 - **React Components**: Функциональные компоненты (LoginForm, RegisterForm, GameModeSelection, UserProfile)
-- **Context API**: AuthContext для управления состоянием авторизации
-- **Custom Hooks**: Переиспользуемая логика (useGame)
-- **TypeScript Interfaces**: Строгая типизация
-- **Vite**: Быстрая разработка и оптимизированная сборка
+- **Context API**: AuthContext для управления состоянием аутентификации с сохранением токенов
+- **Custom Hooks**: Переиспользуемая игровая логика (useGame) с polling, повторными попытками и валидацией
+- **TypeScript Interfaces**: Строгая типизация API контрактов
+- **Vite**: Быстрая разработка с proxy для backend API
+- **API утилита**: Централизованный `authorizedFetch` с автообновлением токенов при 401
+
+### Архитектура безопасности
+
+- **Stateless JWT**: Без серверных сессий; токены содержат ID пользователя и роли
+- **Хеширование паролей**: BCrypt с автоматической генерацией соли
+- **Срок действия токенов**: Access-токены (1 час), refresh-токены (7 дней)
+- **Ротация токенов**: Refresh-эндпоинты выдают новый refresh-токен, старый становится невалидным
+- **Ролевой доступ**: Роль `USER` по умолчанию; будущая поддержка `ADMIN` через `@PreAuthorize`
 
 ## Зависимости
 
@@ -331,16 +437,133 @@ Backend приложения — это **Headless REST API**, разработ�
 
 - **Java 18**
 - **Spring Boot 3.3.4**
-- **SpringDoc OpenAPI 2.6.0**
-- **Spring Security** — авторизация и базовая аутентификация
-- **Spring Data JPA** — работа с БД
-- **PostgreSQL** — основная база данных
-- **H2** — база данных для тестов
+- **SpringDoc OpenAPI 2.6.0** — Интеграция Swagger UI
+- **Spring Security** — JWT Bearer-аутентификация
+- **Spring Data JPA** — Абстракция работы с БД
+- **jjwt 0.13.0** — Генерация и валидация JWT токенов
+- **PostgreSQL** — Основная база данных
+- **H2** — Тестовая БД (in-memory)
 
 ### Frontend
 
 - **React 19.2.0**
 - **TypeScript 5.9.3**
 - **Vite 7.2.4**
-- **ESLint** — Проверка кода
+- **ESLint** — Проверка качества кода
 - **Prettier** — Форматирование кода
+
+## 🔧 Конфигурация
+
+### Переменные окружения Backend
+
+Обязательные переменные (устанавливаются в `.env`, Docker Compose или CI/CD):
+
+| Переменная | Описание | Пример |
+| --- | --- | --- |
+| `SPRING_DATASOURCE_URL` | JDBC URL PostgreSQL | `jdbc:postgresql://localhost:5433/game_sessions_storage` |
+| `SPRING_DATASOURCE_USERNAME` | Имя пользователя БД | `postgres` |
+| `SPRING_DATASOURCE_PASSWORD` | Пароль БД | `secure_password` |
+| `JWT_SECRET` | Секрет для подписи JWT (HS256, мин. 256 бит) | `base64-encoded-secret` |
+
+Опциональные (со значениями по умолчанию):
+
+| Переменная | Значение по умолчанию | Описание |
+| --- | --- | --- |
+| `jwt.access-token-validity` | `3600` | Срок действия access-токена в секундах (1 час) |
+| `jwt.refresh-token-validity` | `604800` | Срок действия refresh-токена в секундах (7 дней) |
+
+Файл конфигурации: `backend/src/main/resources/application.properties`
+
+### Конфигурация прокси Frontend
+
+Vite прокси (`frontend/vite.config.ts`) перенаправляет API запросы:
+
+```typescript
+server: {
+  proxy: {
+    '/game': { target: 'http://localhost:8081', changeOrigin: true },
+    '/auth': { target: 'http://localhost:8081', changeOrigin: true },
+  }
+}
+```
+
+## Production-развертывание
+
+Для production-окружения:
+
+1. Используйте Docker Compose с внешней конфигурацией
+2. Сгенерируйте надёжный `JWT_SECRET` (минимум 32 случайных байта, храните безопасно)
+3. Используйте управляемый PostgreSQL сервис или persistent volumes
+4. Настройте reverse proxy (Nginx) для SSL termination
+5. Установите корректные CORS origins в `SecurityConfig.java`
+6. Сборка backend: `./gradlew build -x test` (JAR в `backend/build/libs/`)
+7. Сборка фронтенда: `npm run build` (статичные файлы в `frontend/dist/`)
+8. Раздача фронтенда через Nginx или CDN
+
+Рекомендуется использовать Docker volumes и secrets для конфиденциальных данных в production.
+
+## Тестирование
+
+### Backend
+
+```bash
+cd backend
+./gradlew test                    # Запуск всех тестов с H2 БД
+./gradlew test --tests org.example.domain.service.GameServiceTest  # Конкретный тест
+./gradlew test --info             # Подробный вывод
+./gradlew jacocoTestReport        # Генерация отчёта о покрытии (HTML в build/reports)
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm run lint                      # Проверка качества кода ESLint
+npm run format:check              # Проверка форматирования Prettier
+```
+
+## Устранение неполадок
+
+### JWT токен истёк
+
+Фронтенд автоматически пытается обновить токен. Если обновление не удалось (401 на refresh-эндпоинте), вы будете перенаправлены на страницу входа.
+
+### Конфликты портов
+
+- Backend по умолчанию: 8081 (изменяется в `application.properties` или маппинге Docker)
+- Frontend dev: 5173, prod: 80 (Docker)
+- PostgreSQL: 5433 внешний (контейнер 5432)
+
+### Ошибки подключения к БД
+
+- Убедитесь, что PostgreSQL запущен: `docker ps` или `pg_isready`
+- Проверьте переменные окружения: `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
+- Docker сеть: убедитесь, что контейнер `backend-api` может reach контейнер `db` (compose сеть)
+
+### API вызовы возвращают 401
+
+- Убедитесь, что у вас валидный access-токен (не истёкший)
+- Проверьте заголовок `Authorization: Bearer <token>`
+- Обновите токен через `/auth/refresh/access` при необходимости
+- Для разработки убедитесь, что запущен Vite (порт 5173) для proxy
+
+### Авторизация в Swagger UI
+
+1. Вызовите `/auth/signin` для получения токенов (используйте "Try it out" в Swagger)
+2. Скопируйте значение `accessToken`
+3. Нажмите кнопку "Authorize" (вверху справа) → введите `Bearer <accessToken>` → Authorize
+4. Теперь можно тестировать защищённые endpoints
+
+## Вклад в проект
+
+Следуйте стандартным best practices Spring Boot и React:
+- Слоистая архитектура: контроллеры → сервисы → репозитории
+- Внедрение зависимостей для всех бинов
+- Принцип единственной ответственности (SRP)
+- DTO для API контрактов; никаких entity за пределами datasource слоя
+- Комплексная обработка ошибок через `@ControllerAdvice`
+- Unit-тесты для сервисов, интеграционные тесты для контроллеров
+
+## Лицензия
+
+Проект создан в образовательных целях.

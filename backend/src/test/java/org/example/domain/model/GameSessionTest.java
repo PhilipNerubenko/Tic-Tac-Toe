@@ -2,7 +2,7 @@ package org.example.domain.model;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -159,7 +159,7 @@ class GameSessionTest {
         UUID playerO = UUID.randomUUID();
         UUID sessionId = UUID.randomUUID();
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        LocalDateTime createdAt = LocalDateTime.now();
+        Instant createdAt = Instant.now();
         GameSession session = new GameSession(sessionId, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         assertThat(session.isPlayer(playerO)).isTrue();

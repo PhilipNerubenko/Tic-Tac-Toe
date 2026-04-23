@@ -63,10 +63,12 @@ export const GameHistory: React.FC<GameHistoryProps> = ({ onClose }) => {
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Unknown';
     try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return 'Unknown';
       return (
-        new Date(dateStr).toLocaleDateString() +
+        date.toLocaleDateString() +
         ' ' +
-        new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       );
     } catch {
       return 'Unknown';

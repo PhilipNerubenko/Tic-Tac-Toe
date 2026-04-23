@@ -31,7 +31,7 @@ public interface JpaGameRepository extends CrudRepository<GameSessionEntity, UUI
     SELECT u.id as userId, u.login as login,
            COUNT(g.id) as totalGames,
            COUNT(CASE WHEN g.winner_id = u.id THEN 1 END) as totalWins,
-           COUNT(CASE WHEN g.winner_id = u.id THEN 1 END)::double / COUNT(g.id) as winRate
+            COUNT(CASE WHEN g.winner_id = u.id THEN 1 END)::double precision / COUNT(g.id) as winRate
     FROM users u
     JOIN game_sessions g ON (g.player_x_id = u.id OR g.player_o_id = u.id)
     WHERE g.status IN ('VICTORY', 'DRAW', 'OPPONENT_LEFT')
