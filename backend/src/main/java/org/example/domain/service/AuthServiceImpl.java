@@ -1,10 +1,16 @@
 package org.example.domain.service;
 
-import org.example.domain.exception.DuplicateUserException;
+import io.jsonwebtoken.Claims;
+import org.example.domain.model.JwtAuthentication;
 import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
+import org.example.web.model.JwtRequest;
+import org.example.web.model.JwtResponse;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.UUID;
 
 /**
@@ -14,25 +20,16 @@ import java.util.UUID;
  */
 public class AuthServiceImpl implements AuthService {
 
-    /** Сервис для работы с пользователями */
     private final UserService userService;
+    private final JwtProvider jwtProvider;
+    private final JwtUtil jwtUtil;
 
-    /**
-     * Создает экземпляр сервиса авторизации.
-     *
-     * @param userService сервис для работы с пользователями.
-     */
-    public AuthServiceImpl(UserService userService) {
+    public AuthServiceImpl(UserService userService, JwtProvider jwtProvider, JwtUtil jwtUtil) {
         this.userService = userService;
+        this.jwtProvider = jwtProvider;
+        this.jwtUtil = jwtUtil;
     }
 
-    /**
-     * Регистрирует нового пользователя в системе.
-     *
-     * @param command команда на регистрацию с логином и паролем.
-     * @return {@code true}, если регистрация прошла успешно.
-     * @throws DuplicateUserException если пользователь с таким логином уже существует.
-     */
     @Override
     @Transactional
     public boolean signUp(RegistrationCommand command) {
@@ -40,24 +37,58 @@ public class AuthServiceImpl implements AuthService {
         return true;
     }
 
-    /**
-     * Аутентифицирует пользователя по логину и паролю.
-     *
-     * @param login    уникальное имя пользователя.
-     * @param password пароль пользователя.
-     * @return UUID аутентифицированного пользователя.
-     * @throws IllegalArgumentException если логин или пароль неверны.
-     */
     @Override
     @Transactional(readOnly = true)
-    public UUID signIn(String login, String password) {
-        if (!userService.validateCredentials(login, password)) {
+    public JwtResponse signIn(JwtRequest request) {
+        if (!userService.validateCredentials(request.login(), request.password())) {
             throw new IllegalArgumentException("Invalid login or password");
         }
 
-        User user = userService.findByLogin(login)
+        User user = userService.findByLogin(request.login())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid login or password"));
 
-        return user.id();
+        return generateJwtResponse(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public JwtResponse refreshAccessToken(String refreshToken) {
+        User user = resolveUserFromRefreshToken(refreshToken);
+        return generateJwtResponse(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public JwtResponse refreshRefreshToken(String refreshToken) {
+        User user = resolveUserFromRefreshToken(refreshToken);
+        return generateJwtResponse(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public JwtAuthentication getAuthentication(String accessToken) {
+        if (!jwtProvider.validateAccessToken(accessToken)) {
+            throw new IllegalArgumentException("Invalid access token");
+        }
+
+        Claims claims = jwtProvider.getClaims(accessToken);
+
+        return jwtUtil.createAuthentication(claims);
+    }
+
+    private User resolveUserFromRefreshToken(String refreshToken) {
+        if (!jwtProvider.validateRefreshToken(refreshToken)) {
+            throw new IllegalArgumentException("Invalid refresh token");
+        }
+
+        String userId = jwtProvider.getClaims(refreshToken).getSubject();
+        return userService.findById(UUID.fromString(userId))
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
+
+    private JwtResponse generateJwtResponse(User user) {
+        String accessToken = jwtProvider.generateAccessToken(user);
+        String refreshToken = jwtProvider.generateRefreshToken(user);
+        return new JwtResponse("Bearer", accessToken, refreshToken);
     }
 }

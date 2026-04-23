@@ -3,14 +3,17 @@ package org.example.web.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
+import org.example.domain.model.JwtAuthentication;
 import org.example.domain.model.User;
 import org.example.domain.service.GameService;
 import org.example.domain.service.UserService;
 import org.example.web.mapper.GameMapperDTO;
 import org.example.web.model.GameSessionDTO;
+import org.example.web.model.LeaderboardResponseDTO;
 import org.example.web.model.MoveRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,21 +33,19 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/game")
+@SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Game Controller", description = "Управление игровыми сессиями и ходами ИИ")
 public class GameController {
 
     private final GameService gameService;
-    private final UserService userService;
 
     /**
      * Конструктор для инициализации контроллера.
      *
      * @param gameService сервис для обработки игровой логики и ходов ИИ.
-     * @param userService сервис для работы с пользователями.
      */
-    public GameController(GameService gameService, UserService userService) {
+    public GameController(GameService gameService) {
         this.gameService = gameService;
-        this.userService = userService;
     }
 
     /**
@@ -56,11 +58,12 @@ public class GameController {
     @Operation(summary = "Создать новую игру", description = "Инициализирует пустое поле и сохраняет сессию")
     @ApiResponse(responseCode = "201", description = "Игра успешно создана")
     public ResponseEntity<GameSessionDTO> createGame(
-        @RequestParam UUID creatorId,
         @RequestParam(defaultValue = "true") boolean vsAi,
         @Parameter(description = "Размер квадратного поля") @RequestParam(defaultValue = "3") int size) {
 
-        GameSession newSession = gameService.createGame(size, creatorId, vsAi);
+        UUID authenticatedUserId = getAuthenticatedUserId();
+
+        GameSession newSession = gameService.createGame(size, authenticatedUserId, vsAi);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(GameMapperDTO.toDTO(newSession));
     }
@@ -167,13 +170,45 @@ public class GameController {
      */
     private UUID getAuthenticatedUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Не авторизован");
+
+        if (authentication instanceof JwtAuthentication jwtAuth) {
+            return jwtAuth.getPrincipal();
         }
 
-        String login = authentication.getName();
-        User user = userService.findByLogin(login)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Пользователь не найден"));
-        return user.id();
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный тип аутентификации");
+    }
+
+    @GetMapping("/history")
+    @Operation(summary = "Получить историю игр", description = "Возвращает список всех завершенных игр текущего пользователя")
+    @ApiResponse(responseCode = "200", description = "История игр успешно получена")
+    public ResponseEntity<List<GameSessionDTO>> getMyGamesHistory() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!(auth instanceof JwtAuthentication jwtAuth)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный тип аутентификации");
+        }
+
+        UUID currentUserUuid = jwtAuth.getPrincipal();
+
+        List<GameSessionDTO> history = gameService.getGameHistory(currentUserUuid)
+                .stream()
+                .map(GameMapperDTO::toDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/leaderboard")
+    @Operation(summary = "Таблица лидеров", description = "Топ N игроков по винрейту")
+    public ResponseEntity<List<LeaderboardResponseDTO>> getLeaderboard(@RequestParam(defaultValue = "10") int n) {
+        int limit = (n <= 0) ? 10 : Math.min(n, 100);
+        getAuthenticatedUserId();
+
+        List<LeaderboardResponseDTO> response = gameService.getLeaderboard(limit)
+                .stream()
+                .map(stats -> new LeaderboardResponseDTO(stats.userId(), stats.login(), stats.winRate()))
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 }

@@ -51,12 +51,12 @@ public class GameConfig {
     }
 
     @Bean
-    public AuthService authService(UserService userService) {
-        return new AuthServiceImpl(userService);
+    public AuthService authService(UserService userService, JwtProvider jwtProvider, JwtUtil jwtUtil) {
+        return new AuthServiceImpl(userService, jwtProvider, jwtUtil);
     }
 
     @Bean
-    public AuthFilter authFilter(UserService userService) {
-        return new AuthFilter(userService);
+    public AuthFilter authFilter(JwtProvider jwtProvider, JwtUtil jwtUtil) {
+        return new AuthFilter(jwtProvider, jwtUtil);
     }
 }

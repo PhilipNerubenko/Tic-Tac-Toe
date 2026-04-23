@@ -4,11 +4,15 @@ import org.example.domain.exception.DuplicateUserException;
 import org.example.domain.model.CellType;
 import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
+import org.example.domain.model.UserRole;
+import org.example.web.model.JwtRequest;
+import org.example.web.model.JwtResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,12 +29,18 @@ class AuthServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private JwtProvider jwtProvider;
+
+    @Mock
+    private JwtUtil jwtUtil;
+
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        authService = new AuthServiceImpl(userService);
+        authService = new AuthServiceImpl(userService, jwtProvider, jwtUtil);
     }
 
     @Test
@@ -38,7 +48,7 @@ class AuthServiceTest {
         RegistrationCommand command = new RegistrationCommand("testuser", "testpassword");
 
         when(userService.register(anyString(), anyString())).thenReturn(
-                new User(UUID.randomUUID(), "testuser", "testpassword", CellType.CROSS)
+                new User(UUID.randomUUID(), "testuser", "testpassword", CellType.CROSS, Collections.singletonList(UserRole.USER))
         );
 
         boolean result = authService.signUp(command);
@@ -60,18 +70,22 @@ class AuthServiceTest {
     }
 
     @Test
-    void signIn_ShouldReturnUserId_WhenCredentialsValid() {
+    void signIn_ShouldReturnJwtResponse_WhenCredentialsValid() {
         String login = "testuser";
         String password = "testpassword";
         UUID expectedUserId = UUID.randomUUID();
-        User user = new User(expectedUserId, login, password, CellType.CROSS);
+        User user = new User(expectedUserId, login, password, CellType.CROSS, Collections.singletonList(UserRole.USER));
 
         when(userService.validateCredentials(login, password)).thenReturn(true);
         when(userService.findByLogin(login)).thenReturn(Optional.of(user));
+        when(jwtProvider.generateAccessToken(user)).thenReturn("access-token");
+        when(jwtProvider.generateRefreshToken(user)).thenReturn("refresh-token");
 
-        UUID result = authService.signIn(login, password);
+        JwtResponse result = authService.signIn(new JwtRequest(login, password));
 
-        assertEquals(expectedUserId, result);
+        assertEquals("Bearer", result.type());
+        assertEquals("access-token", result.accessToken());
+        assertEquals("refresh-token", result.refreshToken());
         verify(userService, times(1)).validateCredentials(login, password);
         verify(userService, times(1)).findByLogin(login);
     }
@@ -83,7 +97,7 @@ class AuthServiceTest {
 
         when(userService.validateCredentials(login, password)).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class, () -> authService.signIn(login, password));
+        assertThrows(IllegalArgumentException.class, () -> authService.signIn(new JwtRequest(login, password)));
 
         verify(userService, times(1)).validateCredentials(login, password);
         verify(userService, never()).findByLogin(anyString());
@@ -97,7 +111,7 @@ class AuthServiceTest {
         when(userService.validateCredentials(login, password)).thenReturn(true);
         when(userService.findByLogin(login)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> authService.signIn(login, password));
+        assertThrows(IllegalArgumentException.class, () -> authService.signIn(new JwtRequest(login, password)));
 
         verify(userService, times(1)).validateCredentials(login, password);
         verify(userService, times(1)).findByLogin(login);

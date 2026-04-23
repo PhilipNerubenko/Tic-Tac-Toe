@@ -3,7 +3,9 @@ package org.example.domain.service;
 import org.example.domain.model.GameMap;
 import org.example.domain.model.GameSession;
 import org.example.domain.model.GameStatus;
+import org.example.domain.model.PlayerStats;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -68,4 +70,19 @@ public interface GameService {
      * @return обновленная сессия с новым статусом, если игрок покинул
      */
     GameSession checkOpponentLeft(UUID gameId, UUID userId, long timeoutSeconds);
+
+    /**
+     * Получает историю завершенных игр для конкретного пользователя.
+     *
+     * @param userUuid уникальный идентификатор пользователя.
+     * @return список завершенных игровых сессий.
+     */
+    List<GameSession> getGameHistory(UUID userUuid);
+
+    /**
+     * Возвращает топ игроков по выигрышам
+     * @param n количество выводимых игроков
+     * @return Список игроков
+     */
+    List<PlayerStats> getLeaderboard(int n);
 }

@@ -5,8 +5,23 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
 import { GameModeSelection } from './components/GameModeSelection';
-import { UserProfile } from './components/UserProfile';function Game({ gameApi, onBackToMenu, onPlayAgain, onShowProfile, onRetry }: { gameApi: ReturnType<typeof useGame>; onBackToMenu: () => void; onPlayAgain: () => void; onShowProfile: () => void; onRetry: () => void }) {
-  const { gameData, loading, makingMove, error, isNotYourTurn, makeMove, checkOpponentLeft } = gameApi;
+import { UserProfile } from './components/UserProfile';
+
+function Game({
+  gameApi,
+  onBackToMenu,
+  onPlayAgain,
+  onShowProfile,
+  onRetry,
+}: {
+  gameApi: ReturnType<typeof useGame>;
+  onBackToMenu: () => void;
+  onPlayAgain: () => void;
+  onShowProfile: () => void;
+  onRetry: () => void;
+}) {
+  const { gameData, loading, makingMove, error, isNotYourTurn, makeMove, checkOpponentLeft } =
+    gameApi;
   const { logout, user } = useAuth();
 
   if (loading && !gameData) {
@@ -31,15 +46,19 @@ import { UserProfile } from './components/UserProfile';function Game({ gameApi, 
   }
 
   const boardSize = gameData.gameMap.size;
-  
+
   // Проверяем, является ли текущий пользователь тем, кто должен ходить
   const isMyTurn = gameData.currentPlayer === user?.userId;
-  
+
   const statusText =
     {
       WAITING_FOR_PLAYERS: 'Waiting for players...',
       PLAYER_TURN: isMyTurn ? 'Your turn' : "Opponent's turn",
-      VICTORY: gameData.winner ? (gameData.winner === user?.userId ? 'You won! 🎉' : 'Opponent won!') : 'Victory!',
+      VICTORY: gameData.winner
+        ? gameData.winner === user?.userId
+          ? 'You won! 🎉'
+          : 'Opponent won!'
+        : 'Victory!',
       DRAW: 'Draw!',
       OPPONENT_LEFT: 'Opponent left the game! You win! 🎉',
     }[gameData.status] || gameData.status;
@@ -77,29 +96,23 @@ import { UserProfile } from './components/UserProfile';function Game({ gameApi, 
               key={`${i}-${j}`}
               className={`cell ${cell === 1 ? 'x-player' : cell === 2 ? 'o-player' : ''}`}
               onClick={() => {
-                if (gameData.status === 'PLAYER_TURN' &&
-                  isMyTurn &&
-                  !makingMove &&
-                  cell === 0) {
+                if (gameData.status === 'PLAYER_TURN' && isMyTurn && !makingMove && cell === 0) {
                   makeMove(i, j);
                 }
               }}
-              disabled={!(gameData.status === 'PLAYER_TURN' &&
-                isMyTurn &&
-                !makingMove &&
-                cell === 0) || makingMove}
-              aria-disabled={!(gameData.status === 'PLAYER_TURN' &&
-                isMyTurn &&
-                !makingMove &&
-                cell === 0) || makingMove}
+              disabled={
+                !(gameData.status === 'PLAYER_TURN' && isMyTurn && !makingMove && cell === 0) ||
+                makingMove
+              }
+              aria-disabled={
+                !(gameData.status === 'PLAYER_TURN' && isMyTurn && !makingMove && cell === 0) ||
+                makingMove
+              }
               aria-label={`Cell ${i}, ${j}. ${cell === 1 ? 'X' : cell === 2 ? 'O' : 'Empty'}`}
               style={{
                 opacity: makingMove ? 0.6 : 1,
                 cursor:
-                  gameData.status === 'PLAYER_TURN' &&
-                    isMyTurn &&
-                    !makingMove &&
-                    cell === 0
+                  gameData.status === 'PLAYER_TURN' && isMyTurn && !makingMove && cell === 0
                     ? 'pointer'
                     : 'not-allowed',
               }}
@@ -112,7 +125,9 @@ import { UserProfile } from './components/UserProfile';function Game({ gameApi, 
 
       <div className="status-panel">
         <div className="status-badge">{statusText}</div>
-        {(gameData.status === 'VICTORY' || gameData.status === 'DRAW' || gameData.status === 'OPPONENT_LEFT') && (
+        {(gameData.status === 'VICTORY' ||
+          gameData.status === 'DRAW' ||
+          gameData.status === 'OPPONENT_LEFT') && (
           <button onClick={onPlayAgain} className="btn play-again-btn">
             Play Again
           </button>
@@ -184,19 +199,19 @@ function App() {
 
   return (
     <>
-        <Game 
-          gameApi={game} 
-          onBackToMenu={() => {
-            game.resetGame();
-      setGameStarted(false);
-      setShowProfile(false);
-          }} 
-          onPlayAgain={() => { 
-            game.startNewGame(vsAi); 
-          }}
-          onShowProfile={() => setShowProfile(true)}
-          onRetry={() => game.startNewGame(vsAi)}
-        />
+      <Game
+        gameApi={game}
+        onBackToMenu={() => {
+          game.resetGame();
+          setGameStarted(false);
+          setShowProfile(false);
+        }}
+        onPlayAgain={() => {
+          game.startNewGame(vsAi);
+        }}
+        onShowProfile={() => setShowProfile(true)}
+        onRetry={() => game.startNewGame(vsAi)}
+      />
       {showProfile && <UserProfile onClose={() => setShowProfile(false)} />}
     </>
   );

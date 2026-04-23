@@ -191,7 +191,6 @@ The frontend automatically supports any board size returned by the backend throu
 
 To deploy the frontend to a production environment, you'll need to build the application using `npm run build` and serve the static assets using a web server like Nginx or Apache. Ensure that the backend API URL is correctly configured in your environment variables. You may also want to configure a Content Delivery Network (CDN) to improve performance and reduce latency for users around the world.
 
-
 This project uses:
 
 - **ESLint**: Code quality

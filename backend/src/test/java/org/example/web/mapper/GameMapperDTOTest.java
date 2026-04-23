@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,7 +47,8 @@ class GameMapperDTOTest {
         int[][] rawMap = {{1, 0}, {0, 2}};
         GameMap domainMap = new GameMap(rawMap, 2);
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        GameSession session = new GameSession(id, domainMap, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
+        LocalDateTime createdAt = LocalDateTime.now();
+        GameSession session = new GameSession(id, domainMap, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         GameSessionDTO dto = GameMapperDTO.toDTO(session);
 
@@ -65,7 +67,8 @@ class GameMapperDTOTest {
         int[][] rawMap = {{1, 2}, {0, 0}};
         GameMapDTO dtoMap = new GameMapDTO(rawMap, 2);
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        GameSessionDTO dto = new GameSessionDTO(id, dtoMap, GameStatusDTO.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
+        LocalDateTime createdAt = LocalDateTime.now();
+        GameSessionDTO dto = new GameSessionDTO(id, dtoMap, GameStatusDTO.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         GameSession session = GameMapperDTO.toDomain(dto);
 

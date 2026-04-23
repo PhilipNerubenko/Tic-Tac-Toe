@@ -3,9 +3,11 @@ package org.example.datasource.repository;
 import org.example.datasource.mapper.GameMapper;
 import org.example.datasource.model.GameSessionEntity;
 import org.example.domain.model.GameSession;
+import org.example.domain.model.PlayerStats;
 import org.example.domain.repository.GameRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -85,6 +87,19 @@ public class GameRepositoryImpl implements GameRepository {
         jpaGameRepository.deleteById(id);
     }
 
+    @Override
+    public List<PlayerStats> findTopPlayers(int n) {
+        List<Object[]> results = jpaGameRepository.findTopLeadersNative(n, 1);
+
+        return results.stream()
+                .map(row -> new PlayerStats(
+                        (UUID) row[0],
+                        (String) row[1],
+                        (Double) row[2]
+                ))
+                .toList();
+    }
+
     /**
      * Возвращает все активные и завершенные игровые сессии.
      *
@@ -97,5 +112,14 @@ public class GameRepositoryImpl implements GameRepository {
         return StreamSupport.stream(entities.spliterator(), false)
                 .map(GameMapper::toDomain)
                 .collect(Collectors.toMap(GameSession::getId, session -> session));
+    }
+
+    @Override
+    public List<GameSession> findAllFinishedByPlayerUuid(UUID userUuid) {
+        List<GameSessionEntity> entities = jpaGameRepository.findAllFinishedByPlayerUuid(userUuid);
+
+        return entities.stream()
+                .map(GameMapper::toDomain)
+                .toList();
     }
 }

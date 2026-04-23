@@ -1,7 +1,9 @@
 package org.example.domain.repository;
 
 import org.example.domain.model.GameSession;
+import org.example.domain.model.PlayerStats;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -50,9 +52,24 @@ public interface GameRepository {
     Map<UUID, GameSession> findAll();
 
     /**
+     * Возвращает все завершённые игры по UUID игрока.
+     *
+     * @param userUuid UUID игрока, историю которого нужно найти.
+     * @return Список завершённых игровых сессий.
+     */
+    List<GameSession> findAllFinishedByPlayerUuid(UUID userUuid);
+
+    /**
      * Удаляет игровую сессию из системы.
      *
      * @param id уникальный идентификатор сессии для удаления.
      */
     void deleteById(UUID id);
+
+    /**
+     * Возвращает топ игроков по выигрышам
+     * @param n количество выводимых игроков
+     * @return Список игроков
+     */
+    List<PlayerStats> findTopPlayers(int n);
 }

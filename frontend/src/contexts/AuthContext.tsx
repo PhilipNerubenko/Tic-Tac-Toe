@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback, type ReactNode, useEffect, useRef } from 'react';
-import { STORAGE_KEY, PASSWORD_STORAGE_KEY } from '../constants';
+import { createContext, useContext, useState, useCallback, type ReactNode, useEffect } from 'react';
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_DATA_KEY } from '../constants';
+import { authorizedFetch, logout as apiLogout } from '../utils/api';
 
 interface User {
   userId: string;
@@ -7,79 +8,40 @@ interface User {
 }
 
 interface AuthContextType {
-   user: User | null;
-   isAuthenticated: boolean;
-   login: (login: string, password: string, rememberMe?: boolean) => Promise<boolean>;
-   register: (login: string, password: string) => Promise<boolean>;
-   logout: () => void;
-   getAuthHeader: () => Record<string, string>;
-   fetchUserById: (userId: string) => Promise<{ id: string; login: string } | null>;
-   error: string | null;
- }
+  user: User | null;
+  isAuthenticated: boolean;
+  login: (login: string, password: string, rememberMe?: boolean) => Promise<boolean>;
+  register: (login: string, password: string) => Promise<boolean>;
+  logout: () => void;
+  getAuthHeader: () => Record<string, string>;
+  fetchUserById: (userId: string) => Promise<{ id: string; login: string } | null>;
+  error: string | null;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-
-
-// RFC 7617: кодируем учетные данные Basic Auth с поддержкой UTF-8
-const encodeBasicCredentials = (login: string, password: string) => {
-  const bytes = new TextEncoder().encode(`${login}:${password}`);
-  let binary = '';
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary);
-};
-
-// Используем sessionStorage для пароля (очищается при закрытии вкладки)
-// и localStorage для userId/login (с опцией "запомнить")
-function getStoredPassword(): string | null {
-  return sessionStorage.getItem(PASSWORD_STORAGE_KEY);
-}
-
-function setStoredPassword(password: string): void {
-  sessionStorage.setItem(PASSWORD_STORAGE_KEY, password);
-}
-
-function clearStoredPassword(): void {
-  sessionStorage.removeItem(PASSWORD_STORAGE_KEY);
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const passwordRef = useRef<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-  // Загружаем сохраненные учетные данные при монтировании
   useEffect(() => {
-    const savedAuth = localStorage.getItem(STORAGE_KEY);
-    if (savedAuth) {
-      try {
-        const userData = JSON.parse(savedAuth) as User;
-        const savedPassword = getStoredPassword();
-      if (savedPassword) {
-        passwordRef.current = savedPassword;
-        setTimeout(() => setUser(userData), 0);
-      } else {
-          // Пароль не сохранён в sessionStorage — очищаем данные
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      } catch (err) {
-        console.error('Failed to parse saved auth data:', err);
-        localStorage.removeItem(STORAGE_KEY);
-      }
+    const savedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const savedUser = localStorage.getItem(USER_DATA_KEY);
+    if (savedToken && savedUser) {
+      setToken(savedToken);
+      setUser(JSON.parse(savedUser));
     }
   }, []);
 
   const login = useCallback(async (login: string, password: string): Promise<boolean> => {
     try {
       setError(null);
-      const credentials = encodeBasicCredentials(login, password);
+
       const response = await fetch('/auth/signin', {
         method: 'POST',
-        headers: {
-          'Authorization': `Basic ${credentials}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login, password }),
       });
 
       if (!response.ok) {
@@ -87,18 +49,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      const data = await response.json();
-      const userData: User = { userId: data.userId, login };
+      const authData = await response.json();
+      const { accessToken, refreshToken } = authData;
+
+      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+      if (refreshToken) {
+        localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      }
+      setToken(accessToken);
+
+      const meResponse = await authorizedFetch('/auth/me');
+
+      if (!meResponse.ok) {
+        setError('Failed to fetch user profile');
+        return false;
+      }
+
+      const userDataFromApi = await meResponse.json();
+
+      const userData: User = {
+        userId: userDataFromApi.id,
+        login: userDataFromApi.login,
+      };
+
       setUser(userData);
-      passwordRef.current = password;
-      // Сохраняем userId и login в localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
-      // Сохраняем пароль в sessionStorage (очищается при закрытии вкладки)
-      setStoredPassword(password);
+      localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+
       return true;
     } catch (err) {
       setError('Connection error');
-      console.error('Login error:', err);
+      console.error('Login flow error:', err);
       return false;
     }
   }, []);
@@ -129,34 +109,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getAuthHeader = useCallback((): Record<string, string> => {
-    if (!user || !passwordRef.current) return {};
-    const credentials = encodeBasicCredentials(user.login, passwordRef.current);
-    return { Authorization: `Basic ${credentials}` };
-  }, [user]);
+    if (!token) return {};
+    return { Authorization: `Bearer ${token}` };
+  }, [token]);
 
-  const fetchUserById = useCallback(async (userId: string): Promise<{ id: string; login: string } | null> => {
-    try {
-      const headers = getAuthHeader();
-      const response = await fetch(`/auth/${userId}`, {
-        headers: Object.keys(headers).length ? headers : undefined,
-      });
-      if (!response.ok) {
+  const fetchUserById = useCallback(
+    async (userId: string): Promise<{ id: string; login: string } | null> => {
+      try {
+        const response = await authorizedFetch(`/auth/${userId}`);
+        if (!response.ok) {
+          return null;
+        }
+        const data = await response.json();
+        return { id: data.id, login: data.login };
+      } catch (err) {
+        console.error('Fetch user error:', err);
         return null;
       }
-      const data = await response.json();
-      return { id: data.id, login: data.login };
-    } catch (err) {
-      console.error('Fetch user error:', err);
-      return null;
-    }
-  }, [getAuthHeader]);
+    },
+    []
+  );
 
   const logout = useCallback(() => {
+    setToken(null);
     setUser(null);
-    setError(null);
-    passwordRef.current = null;
-    localStorage.removeItem(STORAGE_KEY);
-    clearStoredPassword();
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(USER_DATA_KEY);
+    localStorage.removeItem('token_expiry');
+    apiLogout();
   }, []);
 
   return (

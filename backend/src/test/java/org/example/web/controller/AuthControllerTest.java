@@ -3,8 +3,11 @@ package org.example.web.controller;
 import org.example.domain.model.CellType;
 import org.example.domain.model.RegistrationCommand;
 import org.example.domain.model.User;
+import org.example.domain.model.UserRole;
 import org.example.domain.service.AuthService;
 import org.example.domain.service.UserService;
+import org.example.web.model.JwtRequest;
+import org.example.web.model.JwtResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -13,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -53,23 +57,24 @@ class AuthControllerTest {
     }
 
     @Test
-    void signIn_ShouldReturnUserId() throws Exception {
-        UUID userId = UUID.randomUUID();
+    void signIn_ShouldReturnJwtTokens() throws Exception {
         String credentials = Base64.getEncoder().encodeToString("user:pass".getBytes());
-        
-        when(authService.signIn("user", "pass")).thenReturn(userId);
+
+        when(authService.signIn(any(JwtRequest.class))).thenReturn(new JwtResponse("Bearer", "access-token", "refresh-token"));
 
         mockMvc.perform(post("/auth/signin")
                         .header("Authorization", "Basic " + credentials))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId").value(userId.toString()));
+                .andExpect(jsonPath("$.type").value("Bearer"))
+                .andExpect(jsonPath("$.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
     }
 
     @Test
     void signIn_ShouldReturnUnauthorized_WhenInvalidCredentials() throws Exception {
         String credentials = Base64.getEncoder().encodeToString("user:wrong".getBytes());
-        
-        when(authService.signIn("user", "wrong")).thenThrow(new IllegalArgumentException("Invalid login or password"));
+
+        when(authService.signIn(any(JwtRequest.class))).thenThrow(new IllegalArgumentException("Invalid login or password"));
 
         mockMvc.perform(post("/auth/signin")
                         .header("Authorization", "Basic " + credentials))
@@ -79,9 +84,8 @@ class AuthControllerTest {
     @Test
     void getUserById_ShouldReturnUser_WhenUserExists() throws Exception {
         UUID userId = UUID.randomUUID();
-        User user = new User(userId, "testuser", "testpassword", CellType.CROSS);
+        User user = new User(userId, "testuser", "testpassword", CellType.CROSS, Collections.singletonList(UserRole.USER));
 
-        // Мокаем поиск пользователя - Security отключён в @WebMvcTest
         when(userService.findById(userId)).thenReturn(Optional.of(user));
 
         mockMvc.perform(get("/auth/" + userId))
@@ -94,7 +98,6 @@ class AuthControllerTest {
     void getUserById_ShouldReturnNotFound_WhenUserDoesNotExist() throws Exception {
         UUID userId = UUID.randomUUID();
 
-        // Мокаем поиск пользователя - пользователь не найден
         when(userService.findById(userId)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/auth/" + userId))

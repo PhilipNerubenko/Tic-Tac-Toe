@@ -3,6 +3,7 @@ package org.example.domain.service;
 import org.example.domain.exception.DuplicateUserException;
 import org.example.domain.model.CellType;
 import org.example.domain.model.User;
+import org.example.domain.model.UserRole;
 import org.example.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -73,7 +75,7 @@ class UserServiceTest {
     @Test
     void findByLogin_ShouldReturnUser_WhenExists() {
         String login = "testuser";
-        User expectedUser = new User(UUID.randomUUID(), login, "password", CellType.CROSS);
+        User expectedUser = new User(UUID.randomUUID(), login, "password", CellType.CROSS, Collections.singletonList(UserRole.USER));
 
         when(userRepository.findByLogin(login)).thenReturn(Optional.of(expectedUser));
 
@@ -99,7 +101,7 @@ class UserServiceTest {
         String login = "testuser";
         String password = "testpassword";
         String encodedPassword = "$2a$10$encodedPassword";
-        User user = new User(UUID.randomUUID(), login, encodedPassword, CellType.CROSS);
+        User user = new User(UUID.randomUUID(), login, encodedPassword, CellType.CROSS, Collections.singletonList(UserRole.USER));
 
         when(userRepository.findByLogin(login)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(password, encodedPassword)).thenReturn(true);
@@ -114,7 +116,7 @@ class UserServiceTest {
         String login = "testuser";
         String password = "testpassword";
         String encodedPassword = "$2a$10$encodedPassword";
-        User user = new User(UUID.randomUUID(), login, encodedPassword, CellType.CROSS);
+        User user = new User(UUID.randomUUID(), login, encodedPassword, CellType.CROSS, Collections.singletonList(UserRole.USER));
 
         when(userRepository.findByLogin(login)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongpassword", encodedPassword)).thenReturn(false);
@@ -139,7 +141,7 @@ class UserServiceTest {
     @Test
     void findById_ShouldReturnUser_WhenExists() {
         UUID userId = UUID.randomUUID();
-        User expectedUser = new User(userId, "testuser", "password", CellType.CROSS);
+        User expectedUser = new User(userId, "testuser", "password", CellType.CROSS, Collections.singletonList(UserRole.USER));
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(expectedUser));
 

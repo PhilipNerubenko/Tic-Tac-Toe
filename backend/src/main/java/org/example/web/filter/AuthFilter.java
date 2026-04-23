@@ -1,26 +1,27 @@
 package org.example.web.filter;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.example.domain.service.UserService;
+import org.example.domain.model.JwtAuthentication;
+import org.example.domain.service.JwtProvider;
+import org.example.domain.service.JwtUtil;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
-import java.util.Base64;
-import java.util.Collections;
 
 public class AuthFilter extends GenericFilterBean {
 
-    private final UserService userService;
+    private final JwtProvider jwtProvider;
+    private final JwtUtil jwtUtil;
 
-    public AuthFilter(UserService userService) {
-        this.userService = userService;
+    public AuthFilter(JwtProvider jwtProvider, JwtUtil jwtUtil) {
+        this.jwtProvider = jwtProvider;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
@@ -31,41 +32,19 @@ public class AuthFilter extends GenericFilterBean {
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         String authorizationHeader = httpRequest.getHeader("Authorization");
 
-        // Если есть заголовок Basic Auth — пытаемся аутентифицировать
-        if (authorizationHeader != null && authorizationHeader.startsWith("Basic ")) {
-            try {
-                String base64Credentials = authorizationHeader.substring("Basic ".length());
-                String decoded = new String(Base64.getDecoder().decode(base64Credentials));
-                String[] credentials = decoded.split(":", 2);
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String accessToken = authorizationHeader.substring("Bearer ".length());
 
-                if (credentials.length == 2) {
-                    String login = credentials[0];
-                    String password = credentials[1];
-
-                    if (userService.validateCredentials(login, password)) {
-                        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                                login, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
-                        );
-                        SecurityContextHolder.getContext().setAuthentication(auth);
-                        chain.doFilter(request, response);
-                    } else {
-                        // Валидация не прошла — возвращаем 401
-                        httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
-                        return;
-                    }
-                } else {
-                    // Некорректный формат credentials — возвращаем 401
-                    httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
-                    return;
-                }
-            } catch (Exception e) {
-                // Ошибка парсинга — возвращаем 401
+            if (jwtProvider.validateAccessToken(accessToken)) {
+                Claims claims = jwtProvider.getClaims(accessToken);
+                JwtAuthentication jwtAuthentication = jwtUtil.createAuthentication(claims);
+                SecurityContextHolder.getContext().setAuthentication(jwtAuthentication);
+            } else {
                 httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
                 return;
             }
-        } else {
-            // Нет заголовка Authorization — просто продолжаем цепочку
-            chain.doFilter(request, response);
         }
+
+        chain.doFilter(request, response);
     }
 }

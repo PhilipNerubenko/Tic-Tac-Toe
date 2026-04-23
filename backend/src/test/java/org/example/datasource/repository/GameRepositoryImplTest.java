@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -46,7 +47,8 @@ class GameRepositoryImplTest {
         UUID playerO = UUID.randomUUID();
         GameMap map = new GameMap(3);
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        GameSession session = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
+        LocalDateTime createdAt = LocalDateTime.now();
+        GameSession session = new GameSession(id, map, GameStatus.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         repository.save(session);
 
@@ -69,7 +71,9 @@ class GameRepositoryImplTest {
         UUID playerO = UUID.randomUUID();
         GameMapEntity mapEntity = new GameMapEntity(new int[][]{{0}}, 1);
         java.time.Instant lastActiveAt = java.time.Instant.now();
-        GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt);
+        LocalDateTime createdAt = LocalDateTime.now();
+
+        GameSessionEntity entity = new GameSessionEntity(id, mapEntity, GameStatusEntity.PLAYER_TURN, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         when(jpaGameRepository.findAll()).thenReturn(java.util.List.of(entity));
 

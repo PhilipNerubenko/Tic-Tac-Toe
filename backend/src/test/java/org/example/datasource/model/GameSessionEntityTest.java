@@ -1,6 +1,8 @@
 package org.example.datasource.model;
 
 import org.junit.jupiter.api.Test;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,8 +37,9 @@ class GameSessionEntityTest {
         GameMapEntity map = new GameMapEntity(3);
         GameStatusEntity status = GameStatusEntity.DRAW;
         java.time.Instant lastActiveAt = java.time.Instant.now();
+        LocalDateTime createdAt = LocalDateTime.now();
 
-        GameSessionEntity entity = new GameSessionEntity(fixedId, map, status, playerX, playerO, playerX, null, lastActiveAt);
+        GameSessionEntity entity = new GameSessionEntity(fixedId, map, status, playerX, playerO, playerX, null, lastActiveAt, createdAt);
 
         assertEquals(fixedId, entity.getId(), "Should preserve the provided UUID");
         assertEquals(map, entity.getGameMap(), "Should preserve the provided map");
