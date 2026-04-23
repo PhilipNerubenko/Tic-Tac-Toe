@@ -45,6 +45,9 @@ public class JwtAuthentication implements Authentication {
 
     @Override
     public void setAuthenticated(boolean authenticated) {
+        if (authenticated) {
+            throw new IllegalArgumentException("Cannot set authenticated to true via setAuthenticated. Use constructor or factory method instead.");
+        }
         this.authenticated = authenticated;
     }
 

@@ -1,9 +1,12 @@
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_DATA_KEY, TOKEN_EXPIRY_KEY } from '../constants';
+
 let isRefreshing = false;
-let pendingRequests: Array<(token: string) => void> = [];
+let pendingRequests: Array<{ resolve: (token: string) => void; reject: (error?: any) => void }> =
+  [];
 
 export async function authorizedFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const token = localStorage.getItem('access_token');
-  const refreshToken = localStorage.getItem('refresh_token');
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
 
   const shouldSetContentType = options.body !== undefined;
   const headers: Record<string, string> = {};
@@ -35,14 +38,14 @@ export async function authorizedFetch(url: string, options: RequestInit = {}): P
 
         if (refreshResponse.ok) {
           const { accessToken, refreshToken: newRefreshToken } = await refreshResponse.json();
-          localStorage.setItem('access_token', accessToken);
+          localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
           if (newRefreshToken) {
-            localStorage.setItem('refresh_token', newRefreshToken);
+            localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
           }
           isRefreshing = false;
 
           // Retry pending requests
-          pendingRequests.forEach(callback => callback(accessToken));
+          pendingRequests.forEach((cb) => cb.resolve(accessToken));
           pendingRequests = [];
 
           // Retry original request with new token
@@ -54,23 +57,35 @@ export async function authorizedFetch(url: string, options: RequestInit = {}): P
           });
         } else {
           logout();
+          isRefreshing = false;
+          const error = new Error('Refresh token invalid');
+          pendingRequests.forEach((cb) => cb.reject(error));
+          pendingRequests = [];
           return response;
         }
       } catch (error) {
         console.error('Token refresh failed:', error);
         logout();
+        isRefreshing = false;
+        pendingRequests.forEach((cb) => cb.reject(error));
+        pendingRequests = [];
         return response;
       }
     } else {
       // Queue request until refresh completes
-      return new Promise((resolve) => {
-        pendingRequests.push((newToken: string) => {
-          const newHeaders: Record<string, string> = { ...headers };
-          newHeaders['Authorization'] = `Bearer ${newToken}`;
-          resolve(fetch(url, {
-            ...options,
-            headers: newHeaders,
-          }));
+      return new Promise((resolve, reject) => {
+        pendingRequests.push({
+          resolve: (newToken: string) => {
+            const newHeaders: Record<string, string> = { ...headers };
+            newHeaders['Authorization'] = `Bearer ${newToken}`;
+            resolve(
+              fetch(url, {
+                ...options,
+                headers: newHeaders,
+              })
+            );
+          },
+          reject,
         });
       });
     }
@@ -80,9 +95,9 @@ export async function authorizedFetch(url: string, options: RequestInit = {}): P
 }
 
 export function logout() {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-  localStorage.removeItem('user_data');
-  localStorage.removeItem('token_expiry');
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(USER_DATA_KEY);
+  localStorage.removeItem(TOKEN_EXPIRY_KEY);
   window.location.href = '/';
 }

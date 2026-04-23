@@ -63,7 +63,11 @@ export const GameHistory: React.FC<GameHistoryProps> = ({ onClose }) => {
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Unknown';
     try {
-      return new Date(dateStr).toLocaleDateString() + ' ' + new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return (
+        new Date(dateStr).toLocaleDateString() +
+        ' ' +
+        new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      );
     } catch {
       return 'Unknown';
     }
@@ -89,7 +93,9 @@ export const GameHistory: React.FC<GameHistoryProps> = ({ onClose }) => {
               <div key={game.id} className="history-item">
                 <div className="history-item-info">
                   <span className="history-date">{formatDate(game.createdAt)}</span>
-                  <span className="history-size">{game.gameMap.size}x{game.gameMap.size}</span>
+                  <span className="history-size">
+                    {game.gameMap.size}x{game.gameMap.size}
+                  </span>
                   <span className={`history-result ${getResultClass(game)}`}>
                     {getResultText(game)}
                   </span>

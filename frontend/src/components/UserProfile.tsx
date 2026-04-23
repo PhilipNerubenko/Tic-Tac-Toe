@@ -19,35 +19,34 @@ export function UserProfile({ onClose }: UserProfileProps) {
   const cancelled = useRef(false);
 
   useEffect(() => {
+    if (!user?.userId) {
+      setUserInfo(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
 
-      if (!user?.userId) {
+    const loadUserInfo = async () => {
+      setLoading(true);
+      setError(null);
+      const info = await fetchUserById(user.userId);
+      if (cancelled.current) return;
+
+      if (info) {
+        setUserInfo(info);
+      } else {
         setUserInfo(null);
-        setError(null);
-        setLoading(false);
-        return;
+        setError('Failed to load user information');
       }
 
-      const loadUserInfo = async () => {
-        setLoading(true);
-        setError(null);
-        const info = await fetchUserById(user.userId);
-        if (cancelled.current) return;
+      setLoading(false);
+    };
 
-        if (info) {
-          setUserInfo(info);
-        } else {
-          setUserInfo(null);
-          setError('Failed to load user information');
-        }
-
-        setLoading(false);
-      };
-
-      void loadUserInfo();
-      return () => {
-        cancelled.current = true;
-      };
-    }, [user?.userId, fetchUserById]);
+    void loadUserInfo();
+    return () => {
+      cancelled.current = true;
+    };
+  }, [user?.userId, fetchUserById]);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -56,11 +55,11 @@ export function UserProfile({ onClose }: UserProfileProps) {
           &times;
         </button>
         <h2>User Profile</h2>
-        
+
         {loading && <p>Loading...</p>}
-        
+
         {error && <p className="error-message">{error}</p>}
-        
+
         {userInfo && !loading && !error && (
           <div className="profile-info">
             <div className="profile-field">
@@ -73,10 +72,8 @@ export function UserProfile({ onClose }: UserProfileProps) {
             </div>
           </div>
         )}
-        
-        {!user && !loading && !error && (
-          <p>No user information available</p>
-        )}
+
+        {!user && !loading && !error && <p>No user information available</p>}
       </div>
     </div>
   );

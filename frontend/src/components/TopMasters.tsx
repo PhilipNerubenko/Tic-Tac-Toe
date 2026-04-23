@@ -76,7 +76,7 @@ export const TopMasters: React.FC<TopMastersProps> = ({ onClose }) => {
                     {entry.login}
                     {entry.userId === user?.userId && ' (You)'}
                   </td>
-                  <td>{entry.winRate.toFixed(1)}%</td>
+                  <td>{(entry.winRate * 100).toFixed(1)}%</td>
                 </tr>
               ))}
             </tbody>

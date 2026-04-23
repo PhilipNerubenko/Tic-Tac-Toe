@@ -89,7 +89,7 @@ public class GameRepositoryImpl implements GameRepository {
 
     @Override
     public List<PlayerStats> findTopPlayers(int n) {
-        List<Object[]> results = jpaGameRepository.findTopLeadersNative(n);
+        List<Object[]> results = jpaGameRepository.findTopLeadersNative(n, 1);
 
         return results.stream()
                 .map(row -> new PlayerStats(

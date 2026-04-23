@@ -10,7 +10,10 @@ interface GameModeSelectionProps {
   onJoinGame: (sessionId: string) => void;
 }
 
-export const GameModeSelection: React.FC<GameModeSelectionProps> = ({ onStartGame, onJoinGame }) => {
+export const GameModeSelection: React.FC<GameModeSelectionProps> = ({
+  onStartGame,
+  onJoinGame,
+}) => {
   const [activeGames, setActiveGames] = useState<GameData[]>([]);
   const [loading, setLoading] = useState(false);
   const [showTopMasters, setShowTopMasters] = useState(false);
@@ -54,7 +57,7 @@ export const GameModeSelection: React.FC<GameModeSelectionProps> = ({ onStartGam
   useEffect(() => {
     // Fetch active games immediately
     fetchActiveGames();
-    
+
     // Set up timeout to refresh after 3 seconds (avoids overlapping requests)
     let timeoutId: ReturnType<typeof setTimeout>;
     const scheduleRefresh = () => {
@@ -63,7 +66,7 @@ export const GameModeSelection: React.FC<GameModeSelectionProps> = ({ onStartGam
       }, 3000);
     };
     scheduleRefresh();
-    
+
     // Cleanup on component unmount
     return () => {
       clearTimeout(timeoutId);
@@ -87,71 +90,63 @@ export const GameModeSelection: React.FC<GameModeSelectionProps> = ({ onStartGam
 
   return (
     <>
-    <div className="game-mode-selection">
-      <h1 className="welcome-title">Choose Game Mode</h1>
-      <div className="mode-buttons">
-        <button
-          className="mode-btn ai-mode-btn"
-          onClick={() => onStartGame(true)}
-        >
-          Play vs AI
-        </button>
-        <button
-          className="mode-btn player-mode-btn"
-          onClick={() => onStartGame(false)}
-        >
-          Play vs Human
-        </button>
-        <button
-          className="mode-btn top-masters-btn"
-          onClick={() => setShowTopMasters(true)}
-        >
-          Top Masters
-        </button>
-        <button
-          className="mode-btn history-btn"
-          onClick={() => setShowHistory(true)}
-        >
-          History
-        </button>
+      <div className="game-mode-selection">
+        <h1 className="welcome-title">Choose Game Mode</h1>
+        <div className="mode-buttons">
+          <button className="mode-btn ai-mode-btn" onClick={() => onStartGame(true)}>
+            Play vs AI
+          </button>
+          <button className="mode-btn player-mode-btn" onClick={() => onStartGame(false)}>
+            Play vs Human
+          </button>
+          <button className="mode-btn top-masters-btn" onClick={() => setShowTopMasters(true)}>
+            Top Masters
+          </button>
+          <button className="mode-btn history-btn" onClick={() => setShowHistory(true)}>
+            History
+          </button>
+        </div>
+
+        {/* Active Games Section */}
+        <div className="active-games-section">
+          <h2>Join Active Games</h2>
+          {loading ? (
+            <p>Loading active games...</p>
+          ) : activeGames.length > 0 ? (
+            <ul className="active-games-list">
+              {activeGames.map((game) => (
+                <li key={game.id} className="active-game-item">
+                  <div className="game-info">
+                    <span>ID: {game.id.substring(0, 8)}...</span>
+                    <span>
+                      Size: {game.gameMap.size}x{game.gameMap.size}
+                    </span>
+                    <span>
+                      Players: {game.playerX && game.playerO ? '2/2' : game.playerX ? '1/2' : '0/2'}
+                    </span>
+                    <span>Status: {game.status}</span>
+                  </div>
+                  <button
+                    className="join-game-btn"
+                    onClick={() => onJoinGame(game.id)}
+                    disabled={!canJoinGame(game)}
+                    style={{
+                      opacity: canJoinGame(game) ? 1 : 0.5,
+                      cursor: canJoinGame(game) ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    {game.playerX === user?.userId ? 'Your Game' : 'Join Game'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No active games available</p>
+          )}
+        </div>
       </div>
-      
-      {/* Active Games Section */}
-      <div className="active-games-section">
-        <h2>Join Active Games</h2>
-        {loading ? (
-          <p>Loading active games...</p>
-        ) : activeGames.length > 0 ? (
-          <ul className="active-games-list">
-            {activeGames.map((game) => (
-              <li key={game.id} className="active-game-item">
-                <div className="game-info">
-                  <span>ID: {game.id.substring(0, 8)}...</span>
-                  <span>Size: {game.gameMap.size}x{game.gameMap.size}</span>
-                  <span>Players: {game.playerX && game.playerO ? '2/2' : game.playerX ? '1/2' : '0/2'}</span>
-                  <span>Status: {game.status}</span>
-                </div>
-                <button
-                  className="join-game-btn"
-                  onClick={() => onJoinGame(game.id)}
-                  disabled={!canJoinGame(game)}
-                  style={{
-                    opacity: canJoinGame(game) ? 1 : 0.5,
-                    cursor: canJoinGame(game) ? 'pointer' : 'not-allowed'
-                  }}
-                >
-                  {game.playerX === user?.userId ? 'Your Game' : 'Join Game'}
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No active games available</p>
-        )}
-      </div>
-    </div>
-    {showTopMasters && <TopMasters onClose={() => setShowTopMasters(false)} />}
-    {showHistory && <GameHistory onClose={() => setShowHistory(false)} />}
+      {showTopMasters && <TopMasters onClose={() => setShowTopMasters(false)} />}
+      {showHistory && <GameHistory onClose={() => setShowHistory(false)} />}
     </>
   );
 };

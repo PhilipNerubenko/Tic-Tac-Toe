@@ -22,19 +22,23 @@ public interface JpaGameRepository extends CrudRepository<GameSessionEntity, UUI
     Optional<GameSessionEntity> findByIdReadOnly(@Param("id") UUID id);
 
     @Query("SELECT g FROM GameSessionEntity g WHERE (g.playerX = :uuid OR g.playerO = :uuid) " +
-            "AND (g.status = org.example.datasource.model.GameStatusEntity.VICTORY " +
-            "OR g.status = org.example.datasource.model.GameStatusEntity.DRAW)")
+            "AND g.status IN (org.example.datasource.model.GameStatusEntity.VICTORY, " +
+            "org.example.datasource.model.GameStatusEntity.DRAW, " +
+            "org.example.datasource.model.GameStatusEntity.OPPONENT_LEFT)")
     List<GameSessionEntity> findAllFinishedByPlayerUuid(@Param("uuid") UUID uuid);
 
     @Query(value = """
     SELECT u.id as userId, u.login as login,
-    CAST(COUNT(CASE WHEN g.winner_id = u.id THEN 1 END) AS double precision) / NULLIF(COUNT(g.id), 0) as winRate
+           COUNT(g.id) as totalGames,
+           COUNT(CASE WHEN g.winner_id = u.id THEN 1 END) as totalWins,
+           COUNT(CASE WHEN g.winner_id = u.id THEN 1 END)::double / COUNT(g.id) as winRate
     FROM users u
     JOIN game_sessions g ON (g.player_x_id = u.id OR g.player_o_id = u.id)
-    WHERE g.status IN ('VICTORY', 'DRAW')
+    WHERE g.status IN ('VICTORY', 'DRAW', 'OPPONENT_LEFT')
     GROUP BY u.id, u.login
-    ORDER BY winRate DESC
+    HAVING COUNT(g.id) >= :minGames
+    ORDER BY winRate DESC, totalWins DESC
     LIMIT :limit
     """, nativeQuery = true)
-    List<Object[]> findTopLeadersNative(@Param("limit") int limit);
+    List<Object[]> findTopLeadersNative(@Param("limit") int limit, @Param("minGames") int minGames);
 }
